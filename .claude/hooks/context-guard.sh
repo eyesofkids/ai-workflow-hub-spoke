@@ -1,17 +1,16 @@
 #!/bin/bash
-# UserPromptSubmit hook：從 session transcript（jsonl）抽出實際對話內容
-# （訊息文字＋工具輸出，排除 metadata 行與 sub-agent sidechain），
-# 換算 token 粗估 context 用量，超過閾值就注入一行警告，
-# 催促模型在下個工作項邊界走 /wrap 交接。定位是絆線不是精密儀表。
+# UserPromptSubmit hook：從 session transcript（jsonl）讀取最後一則 assistant 訊息的
+# API usage（input＋cache_read＋cache_creation ＝ 當前 context 實際 token 數），
+# 計算 context 用量，超過閾值就注入一行警告，催促模型在下個工作項邊界走 /wrap 交接。
+# 用量是 API 實測值不是估算。
 #
-# 已知限制：只在使用者送出訊息時觸發——單一長回合（大量工具呼叫、
-# 派 sub-agent）進行中不會再戳，回合結束後的下一次送訊息才會反映。
+# 已知限制：只在使用者送出訊息時觸發——單一長回合（大量工具呼叫、派 sub-agent）
+# 進行中不會再戳，回合結束後的下一次送訊息才會反映（usage 亦落後一個回合）。
 
 # ── 可調參數（可用同名環境變數覆寫）─────────────────────
-: "${THRESHOLD_PCT:=75}"        # 警告閾值（%）
-: "${CONTEXT_TOKENS:=200000}"   # context window 估計值（tokens）
-: "${BASELINE_TOKENS:=30000}"   # system prompt＋工具定義等固定基底（tokens）
-# 內容 bytes → tokens 以 ×2/7 換算（≈3.5 bytes/token，中英混合的校準值）
+: "${THRESHOLD_PCT:=75}"          # 警告閾值（%）
+: "${CONTEXT_TOKENS:=1000000}"    # context window（現行 Sonnet/Opus/Fable 皆 1M；
+                                  # 跑 200k 模型（如 Haiku 主模型）時覆寫為 200000）
 # ─────────────────────────────────────────────────────────
 
 input=$(cat)
@@ -21,33 +20,18 @@ if [ -z "$transcript" ] || [ ! -f "$transcript" ]; then
   exit 0
 fi
 
-content_bytes=$(jq -rs '
-  [ .[]
-    | select(.isSidechain != true)
-    | .message.content?
-    | select(. != null)
-    | if type == "array" then
-        map(
-          .text // .thinking
-          // (if .content != null then (if (.content|type)=="string" then .content else (.content|tojson) end) else null end)
-          // (if .input != null then (.input|tojson) else null end)
-          // ""
-        ) | join("")
-      else tostring end
-  ] | map(utf8bytelength) | add // 0' "$transcript" 2>/dev/null)
+last_usage=$(jq -rs '[ .[] | select(.isSidechain != true) | .message.usage | select(.input_tokens != null)
+  | (.input_tokens + (.cache_read_input_tokens // 0) + (.cache_creation_input_tokens // 0)) ]
+  | last // 0' "$transcript" 2>/dev/null)
 
-if [ -n "$content_bytes" ] && [ "$content_bytes" -ge 0 ] 2>/dev/null; then
-  est_tokens=$((content_bytes * 2 / 7 + BASELINE_TOKENS))
-else
-  # jq 解析失敗 → 退回總大小估算（bytes/10，扣掉 metadata 灌水的粗校準）
-  size=$(wc -c < "$transcript" | tr -d ' ')
-  est_tokens=$((size / 10 + BASELINE_TOKENS))
+if ! [ "$last_usage" -gt 0 ] 2>/dev/null; then
+  exit 0
 fi
 
-pct=$((est_tokens * 100 / CONTEXT_TOKENS))
+pct=$((last_usage * 100 / CONTEXT_TOKENS))
 
 if [ "$pct" -ge "$THRESHOLD_PCT" ]; then
-  jq -n --arg msg "⚠️ context 預估已達 ${pct}%（內容基準粗估），建議在下個工作項邊界執行 /wrap 交接。" \
+  jq -n --arg msg "⚠️ context 已達 ${pct}%（API usage 實測 ${last_usage} tokens／window ${CONTEXT_TOKENS}），建議在下個工作項邊界執行 /wrap 交接。" \
     '{hookSpecificOutput:{hookEventName:"UserPromptSubmit",additionalContext:$msg}}'
 fi
 

@@ -1,20 +1,20 @@
 #!/bin/bash
-# UserPromptSubmit hook: extract the actual conversation content from the
-# session transcript (jsonl) — message text + tool outputs, excluding
-# metadata lines and sub-agent sidechains — convert to tokens, roughly
-# estimate context usage, and inject a one-line warning once past the
-# threshold, nudging the model toward a /wrap handoff at the next
-# work-item boundary. A tripwire, not a precision gauge.
+# UserPromptSubmit hook: read the API usage of the last assistant message in
+# the session transcript (jsonl) — input + cache_read + cache_creation =
+# actual current context token count — compute context usage, and inject a
+# one-line warning once past the threshold, nudging the model toward a /wrap
+# handoff at the next work-item boundary.
+# The usage is measured by the API, not estimated.
 #
 # Known limitation: fires only when the user submits a message — during a
 # single long turn (many tool calls, sub-agent dispatches) there is no
-# re-poke; growth shows up on the next submission after the turn ends.
+# re-poke; growth shows up on the next submission after the turn ends (and
+# usage always lags by one turn).
 
 # ── Tunables (overridable via same-named env vars) ───────
-: "${THRESHOLD_PCT:=75}"        # warning threshold (%)
-: "${CONTEXT_TOKENS:=200000}"   # estimated context window (tokens)
-: "${BASELINE_TOKENS:=30000}"   # fixed base: system prompt + tool definitions (tokens)
-# content bytes → tokens via ×2/7 (≈3.5 bytes/token, mixed-language calibration)
+: "${THRESHOLD_PCT:=75}"          # warning threshold (%)
+: "${CONTEXT_TOKENS:=1000000}"    # context window (current Sonnet/Opus/Fable are all 1M;
+                                  # override to 200000 when running a 200k model, e.g. Haiku)
 # ─────────────────────────────────────────────────────────
 
 input=$(cat)
@@ -24,34 +24,18 @@ if [ -z "$transcript" ] || [ ! -f "$transcript" ]; then
   exit 0
 fi
 
-content_bytes=$(jq -rs '
-  [ .[]
-    | select(.isSidechain != true)
-    | .message.content?
-    | select(. != null)
-    | if type == "array" then
-        map(
-          .text // .thinking
-          // (if .content != null then (if (.content|type)=="string" then .content else (.content|tojson) end) else null end)
-          // (if .input != null then (.input|tojson) else null end)
-          // ""
-        ) | join("")
-      else tostring end
-  ] | map(utf8bytelength) | add // 0' "$transcript" 2>/dev/null)
+last_usage=$(jq -rs '[ .[] | select(.isSidechain != true) | .message.usage | select(.input_tokens != null)
+  | (.input_tokens + (.cache_read_input_tokens // 0) + (.cache_creation_input_tokens // 0)) ]
+  | last // 0' "$transcript" 2>/dev/null)
 
-if [ -n "$content_bytes" ] && [ "$content_bytes" -ge 0 ] 2>/dev/null; then
-  est_tokens=$((content_bytes * 2 / 7 + BASELINE_TOKENS))
-else
-  # jq parse failure → fall back to total-size estimate (bytes/10, rough
-  # calibration that discounts metadata inflation)
-  size=$(wc -c < "$transcript" | tr -d ' ')
-  est_tokens=$((size / 10 + BASELINE_TOKENS))
+if ! [ "$last_usage" -gt 0 ] 2>/dev/null; then
+  exit 0
 fi
 
-pct=$((est_tokens * 100 / CONTEXT_TOKENS))
+pct=$((last_usage * 100 / CONTEXT_TOKENS))
 
 if [ "$pct" -ge "$THRESHOLD_PCT" ]; then
-  jq -n --arg msg "⚠️ Context estimated at ${pct}% (content-based rough estimate); consider running /wrap for a handoff at the next work-item boundary." \
+  jq -n --arg msg "⚠️ Context at ${pct}% (measured API usage ${last_usage} tokens / window ${CONTEXT_TOKENS}); consider running /wrap for a handoff at the next work-item boundary." \
     '{hookSpecificOutput:{hookEventName:"UserPromptSubmit",additionalContext:$msg}}'
 fi
 

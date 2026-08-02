@@ -56,11 +56,11 @@
 
 ### `.claude/hooks/` — context 用量絆線
 
-[context-guard.sh](.claude/hooks/context-guard.sh)（由 [.claude/settings.json](.claude/settings.json) 的 **UserPromptSubmit** hook 掛載）：每次送出訊息時，從 session transcript（jsonl）抽出實際對話內容（訊息文字＋工具輸出，排除 metadata 與 sub-agent sidechain）粗估 context 用量，超過閾值（預設 75%）就自動注入一行警告——「⚠️ context 預估已達 N%，建議在下個工作項邊界執行 /wrap 交接」。session 每一輪都會被這行戳到，配合 AGENTS.md 的紀律，模型會主動在斷點提出交接，把「人看儀表」翻轉成「機器戳模型」。
+[context-guard.sh](.claude/hooks/context-guard.sh)（由 [.claude/settings.json](.claude/settings.json) 的 **UserPromptSubmit** hook 掛載）：每次送出訊息時，讀取 session transcript（jsonl）最後一則 assistant 訊息的 API usage（實際 token 計數）計算 context 用量，超過閾值（預設 75%）就自動注入一行警告——「⚠️ context 預估已達 N%，建議在下個工作項邊界執行 /wrap 交接」。session 每一輪都會被這行戳到，配合 AGENTS.md 的紀律，模型會主動在斷點提出交接，把「人看儀表」翻轉成「機器戳模型」。
 
-估算方式：內容 bytes 以 ≈3.5 bytes/token 換算，另加 3 萬 tokens 的固定基底（system prompt＋工具定義）；jq 解析失敗時退回「檔案總大小 ÷ 10」的粗校準。仍是粗估，定位是**絆線不是精密儀表**——它觸發的「找斷點交接」提前量充足，不需要精確；閾值與估算參數可在腳本開頭調整，也可用同名環境變數覆寫。
+用量是 **API 實測值**（最後一則 assistant 訊息 usage 的 input＋cache_read＋cache_creation），不是估算。context window 預設 **1M**（現行 Sonnet／Opus／Fable 主力模型皆為 1M）；若 session 跑在 200k 模型（如以 Haiku 為主模型），用 `CONTEXT_TOKENS=200000` 環境變數覆寫。閾值同樣可在腳本開頭調整或用同名環境變數覆寫。
 
-**已知限制**：hook 只在使用者送出訊息時觸發——單一長回合（大量實作、派 sub-agent 的回合）進行中不會再戳，context 在回合內暴衝要等回合結束後的下一次送訊息才會反映。
+**已知限制**：hook 只在使用者送出訊息時觸發——單一長回合（大量實作、派 sub-agent 的回合）進行中不會再戳，context 在回合內暴衝要等回合結束後的下一次送訊息才會反映（usage 也永遠落後一個回合）。
 
 > **注意**：hook 不是放進 `.claude/hooks/` 就會生效——目錄名稱沒有特殊意義，真正生效靠的是 `.claude/settings.json` 裡的註冊，複製到目標專案時**兩個檔案都要帶**（session 進行中才新建的 settings.json 不會被載入，需開一次 `/hooks` 或重啟）。相依條件：**bash + jq**——macOS（新版內建 jq）與 Linux（jq 需自行安裝）可直接用；**Windows 需安裝 Git Bash 與 jq** 才能執行。
 
