@@ -1,5 +1,7 @@
 # ai-workflow-hub-spoke
 
+[English](en/README.md)
+
 一套給 Claude Code 使用的 **AI 協作流程規範**，以「主從形態（hub-spoke）」組織「規劃 → 實作 → 驗收」的完整開發流程。本專案不含應用程式碼，內容是可複用的流程文件與 Claude Code skills，可作為其他專案導入此工作模式的範本。
 
 ![workflow](./ai-workflow_v1.jpg)
