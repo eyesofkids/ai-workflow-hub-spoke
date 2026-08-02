@@ -50,15 +50,28 @@ Defines the full set of working rules, highlights include:
 | [/find-holes](.claude/skills/find-holes/SKILL.md) | Dispatches "hole-finder spokes" against a plan document: the hub trims a need-to-know work ticket, dispatches 1–3 read-only sub-agents with distinct lenses (feasibility / failure modes & concurrency / cost gates & security) to find holes, then collects their observations for the user to adjudicate. Spokes produce opinions only, never verdicts. |
 | [/wrap](.claude/skills/wrap/SKILL.md) | Implementation wrap-up: self-check that test/lint/tsc/build are all green, confirm report/runbook/issue_log are complete, produce a manual-test checklist and a diff-versus-plan summary for the user. When context runs low before the work is done, switch to "mid-work handoff" mode — write a handoff document, close the session, and cold-start a new one. |
 
+### `.claude/agents/` — Hole-finder sub-agent
+
+[hole-finder.md](.claude/agents/hole-finder.md): the sub-agent definition used by `/find-holes` dispatch (`subagent_type: hole-finder`). Model sonnet, **read-only tools** (Read/Grep/Glob), working only from the need-to-know ticket provided by the hub: it reads only the files the ticket allows, may not browse `_docs/`, and premises are not under review. Its output is restricted to a list of "observation + basis" — no verdicts, no severity grades, no alternative designs, and it never touches "whether to do it"; every report ends with "adoption is decided by the hub and the user."
+
+### `.claude/hooks/` — Context-usage tripwire
+
+[context-guard.sh](.claude/hooks/context-guard.sh) (wired up as a **UserPromptSubmit** hook in [.claude/settings.json](.claude/settings.json)): every time you submit a message, it roughly estimates context usage from the session transcript (jsonl) size, and once past the threshold (default 75%) it automatically injects a one-line warning — "⚠️ context estimated at N%, consider running /wrap for a handoff at the next work-item boundary." The session gets poked by this line on every turn; combined with the discipline in AGENTS.md, the model proactively proposes a handoff at a break point — flipping "human watches the gauge" into "machine pokes the model."
+
+The estimate is rough (transcript size ≈ an approximation of context), so treat it as a **tripwire, not a precision gauge** — the action it triggers, "find a break point and hand off," has plenty of lead time and doesn't need precision. The threshold and estimation parameters are adjustable at the top of the script.
+
+> **Note**: placing a script in `.claude/hooks/` does NOT activate it by itself — the directory name has no special meaning; what activates the hook is the registration in `.claude/settings.json`, so when copying to a target project **bring both files** (a settings.json created mid-session is not loaded — open `/hooks` once or restart). Dependencies: **bash + jq** — works out of the box on macOS (recent versions bundle jq) and Linux (install jq yourself); **Windows requires Git Bash and jq**.
+
 ## How to Use
 
-1. Copy (or reference) `AGENTS.md` and `.claude/skills/` into the target project.
-2. Discuss with the user in a hub session and produce decision / plan documents.
-3. Once the plan is approved, open an implementation spoke session starting with "implement per document X."
-4. Wrap up with `/wrap`; the user manually tests per the runbook before any commit/PR.
+1. Copy (or reference) `AGENTS.md` and the whole `.claude/` directory (skills, agents, hooks, settings.json) into the target project.
+2. Run `/config` in Claude Code and set **auto-compact to `off`** — this workflow never uses compact; when context runs low, wrap up or hand off via `/wrap` instead.
+3. Discuss with the user in a hub session and produce decision / plan documents.
+4. Once the plan is approved, open an implementation spoke session starting with "implement per document X."
+5. Wrap up with `/wrap`; the user manually tests per the runbook before any commit/PR.
 
 ## Design Principles
 
 - **Versions are only produced by the hub**: spoke output never becomes a document version directly — it is always merged through the hub.
-- **Never use compact**: context compaction is lossy; when context runs low, wrap up at a natural break point or write a handoff document and cold-start.
+- **Never use compact**: context compaction is lossy; when context runs low, wrap up at a natural break point or write a handoff document and cold-start. Set auto-compact to `off` as well, so it never triggers automatically.
 - **Adjudication belongs to the user**: documents may not define their own overturn conditions; status-field changes are exclusively the user's.

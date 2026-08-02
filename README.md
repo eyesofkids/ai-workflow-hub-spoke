@@ -50,15 +50,28 @@
 | [/find-holes](.claude/skills/find-holes/SKILL.md) | 對規劃書派「找漏洞 spoke」：hub 裁剪 need-to-know 工單，派 1–3 個不同視角（可行性／失敗態與併發／成本閘門與安全）的唯讀 sub-agent 找漏洞，回收意見清單交使用者裁決。spoke 只產意見、不產裁決。 |
 | [/wrap](.claude/skills/wrap/SKILL.md) | 實作收尾：自檢 test/lint/tsc/build 四綠、確認 report/runbook/issue_log 齊備、產出使用者手測清單與 diff 對照摘要。context 吃緊未完工時走「中途交接」模式，寫 handoff 文件後關 session、新 session 冷啟動。 |
 
+### `.claude/agents/` — 找漏洞 sub-agent
+
+[hole-finder.md](.claude/agents/hole-finder.md)：`/find-holes` 派工時使用的 sub-agent 定義（`subagent_type: hole-finder`）。模型 sonnet、**唯讀工具**（Read/Grep/Glob），只依 hub 提供的 need-to-know 工單工作：只讀工單允許的檔案、不得瀏覽 `_docs/`、前提不受審。產出限定為「觀察＋依據」清單——不產裁決、不給嚴重度、不提替代設計、不碰「做不做」；回報固定以「採用與否由 hub 與使用者裁決」收尾。
+
+### `.claude/hooks/` — context 用量絆線
+
+[context-guard.sh](.claude/hooks/context-guard.sh)（由 [.claude/settings.json](.claude/settings.json) 的 **UserPromptSubmit** hook 掛載）：每次送出訊息時，用 session transcript（jsonl）大小粗估 context 用量，超過閾值（預設 75%）就自動注入一行警告——「⚠️ context 預估已達 N%，建議在下個工作項邊界執行 /wrap 交接」。session 每一輪都會被這行戳到，配合 AGENTS.md 的紀律，模型會主動在斷點提出交接，把「人看儀表」翻轉成「機器戳模型」。
+
+估算是粗的（transcript 大小 ≈ context 的近似），所以定位是**絆線不是精密儀表**——它觸發的「找斷點交接」提前量充足，不需要精確；閾值與估算參數可在腳本開頭調整。
+
+> **注意**：hook 不是放進 `.claude/hooks/` 就會生效——目錄名稱沒有特殊意義，真正生效靠的是 `.claude/settings.json` 裡的註冊，複製到目標專案時**兩個檔案都要帶**（session 進行中才新建的 settings.json 不會被載入，需開一次 `/hooks` 或重啟）。相依條件：**bash + jq**——macOS（新版內建 jq）與 Linux（jq 需自行安裝）可直接用；**Windows 需安裝 Git Bash 與 jq** 才能執行。
+
 ## 使用方式
 
-1. 將 `AGENTS.md` 與 `.claude/skills/` 複製（或引用）到目標專案。
-2. 在 hub session 與使用者討論並產出 decision／plan 文件。
-3. 規劃審定後，開實作 spoke session 以「依 X 文件實作」開場。
-4. 實作完成用 `/wrap` 收尾，使用者依 runbook 手測驗收後才 commit/PR。
+1. 將 `AGENTS.md` 與整個 `.claude/`（skills、agents、hooks、settings.json）複製（或引用）到目標專案。
+2. 在 Claude Code 執行 `/config`，將 **auto-compact 設定為 `off`**——本流程不使用 compact，context 吃緊時改走 `/wrap` 收尾或中途交接。
+3. 在 hub session 與使用者討論並產出 decision／plan 文件。
+4. 規劃審定後，開實作 spoke session 以「依 X 文件實作」開場。
+5. 實作完成用 `/wrap` 收尾，使用者依 runbook 手測驗收後才 commit/PR。
 
 ## 設計要點
 
 - **版本只從 hub 出**：spoke 的產出永遠不直接成為文件版本，一律經 hub 融合。
-- **不用 compact**：context 壓縮有損，吃緊時改在自然斷點收尾或寫交接文冷啟動。
+- **不用 compact**：context 壓縮有損，吃緊時改在自然斷點收尾或寫交接文冷啟動；auto-compact 也要設為 `off`，避免被自動觸發。
 - **裁決權在使用者**：文件不得自訂翻案條件，狀態欄變更權專屬使用者。
