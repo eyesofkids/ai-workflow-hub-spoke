@@ -5,8 +5,8 @@
   // 複製此檔到目標專案的 .vscode/settings.json
   // 設定只對該專案生效，不影響全域
   //
-  // 模型：DeepSeek-V4-Pro（Hub + 深度推理 Spoke）
-  //       DeepSeek-V4-Flash（一般審查 Spoke）
+  // 模型：DeepSeek V4 Pro（Hub + 深度推理 Spoke）
+  //       DeepSeek V4 Flash（一般審查 Spoke）
   // ================================================================
 
   // 1. 關閉 AI Agent 的自動對話歷史壓縮
@@ -14,20 +14,21 @@
   "github.copilot.chat.summarizeAgentConversationHistory.enabled": false,
 
   // 2. 自訂模型並限制最大 Context 長度
-  //    DeepSeek-V4 支援 128K，設定 96K 輸入 + 32K 輸出
+  //    DeepSeek V4 支援 1M context，輸出最大 384K
+  //    輸入額度 = 1,000,000 - 384,000 = 616,000
   "github.copilot.chat.customModels": [
     {
-      "model": "DeepSeek-V4-Pro",
+      "model": "DeepSeek V4 Pro",
       "limits": {
-        "maxInputTokens": 96000,
-        "maxOutputTokens": 32000
+        "maxInputTokens": 616000,
+        "maxOutputTokens": 384000
       }
     },
     {
-      "model": "DeepSeek-V4-Flash",
+      "model": "DeepSeek V4 Flash",
       "limits": {
-        "maxInputTokens": 96000,
-        "maxOutputTokens": 32000
+        "maxInputTokens": 616000,
+        "maxOutputTokens": 384000
       }
     }
   ]

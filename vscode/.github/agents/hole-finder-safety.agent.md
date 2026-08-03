@@ -1,8 +1,10 @@
 ---
 name: hole-finder-safety
-description: 安全、併發競態、失敗態視角的找漏洞 spoke。用 DeepSeek-V4-Pro 深度推理。唯讀。
+description: 安全、併發競態、失敗態視角的找漏洞 spoke。用 GPT-5.6 Luna 深度推理，備援 DeepSeek V4 Pro。唯讀。
 tools: ['read', 'search']
-model: 'DeepSeek-V4-Pro (copilot)'
+model:
+  - 'GPT-5.6 Luna (openai)'
+  - 'DeepSeek V4 Pro (deepseek)'
 user-invocable: false
 ---
 

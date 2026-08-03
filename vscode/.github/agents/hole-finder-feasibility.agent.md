@@ -1,8 +1,11 @@
 ---
 name: hole-finder-feasibility
-description: 可行性、可實作性視角的找漏洞 spoke。用 DeepSeek-V4-Flash。唯讀。
+description: 可行性、可實作性視角的找漏洞 spoke。預設使用 DeepSeek V4 Flash。唯讀。
 tools: ['read', 'search']
-model: 'DeepSeek-V4-Flash (copilot)'
+model:
+  - 'DeepSeek V4 Flash (deepseek)'
+  - 'DeepSeek V4 Pro (deepseek)'
+  - 'GPT-5.6 Luna (openai)'
 user-invocable: false
 ---
 

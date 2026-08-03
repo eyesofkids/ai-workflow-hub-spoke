@@ -2,7 +2,7 @@
 
 一套給 **VS Code Copilot Agent Mode** 使用的 AI 協作流程規範，以「主從形態（hub-spoke）」組織「規劃 → 實作 → 驗收」的完整開發流程。
 
-> **模型配置**：DeepSeek-V4-Pro 當 Hub，DeepSeek-V4-Pro/Flash 當審查 Spoke
+> **模型配置**：DeepSeek V4 Pro 當 Hub，DeepSeek V4 Pro/Flash 當審查 Spoke
 > **無需額外擴充套件**：VS Code Copilot 原生 subagent + custom agent 機制
 
 ## 核心理念
@@ -16,8 +16,8 @@
 | 角色 | Copilot 對應 | 模型 | 職責 |
 |------|-------------|------|------|
 | **使用者** | 你 | — | 做不做、目標、狀態變更 |
-| **hub** | `Hub` custom agent | DeepSeek-V4-Pro | 討論聚焦、寫規劃、發工單、派 sub-agent、融合回報 |
-| **spoke** | sub-agent（平行執行） | DeepSeek-V4-Pro / Flash | 唯讀審查，產出「觀察＋依據」，不產裁決 |
+| **hub** | `Hub` custom agent | DeepSeek V4 Pro | 討論聚焦、寫規劃、發工單、派 sub-agent、融合回報 |
+| **spoke** | sub-agent（平行執行） | DeepSeek V4 Pro / Flash | 唯讀審查，產出「觀察＋依據」，不產裁決 |
 
 ## 流程總覽
 
@@ -38,23 +38,29 @@
 │   └── settings.json                        ← 專案級 Copilot 設定
 └── .github/
     ├── agents/
-    │   ├── hub.agent.md                     ← Hub coordinator（DeepSeek-V4-Pro）
-    │   ├── hole-finder-feasibility.agent.md ← 可行性 lens（DeepSeek-V4-Flash）
-    │   ├── hole-finder-safety.agent.md      ← 安全/併發 lens（DeepSeek-V4-Pro）
-    │   └── hole-finder-cost.agent.md        ← 成本閘門 lens（DeepSeek-V4-Flash）
+    │   ├── hub.agent.md                     ← Hub coordinator（DeepSeek V4 Pro）
+    │   ├── explore-flash.agent.md           ← 探索型 sub-agent（DeepSeek V4 Flash）
+    │   ├── hole-finder-feasibility.agent.md ← 可行性 lens（DeepSeek V4 Flash）
+    │   ├── hole-finder-safety.agent.md      ← 安全/併發 lens（Claude Sonnet）
+    │   └── hole-finder-cost.agent.md        ← 成本閘門 lens（DeepSeek V4 Flash）
     └── skills/
         └── wrap/
             └── SKILL.md                     ← 收尾 skill（/wrap）
 ```
 
-## 模型配置
+## 模型配置（含 fallback）
 
-| 角色 | 模型 | 理由 |
-|------|------|------|
-| Hub | DeepSeek-V4-Pro | 規劃裁決，需要推理力 + 大 context |
-| hole-finder-safety | DeepSeek-V4-Pro | 安全/併發 lens 需要深度推理 |
-| hole-finder-feasibility | DeepSeek-V4-Flash | 可行性檢查，速度快成本低 |
-| hole-finder-cost | DeepSeek-V4-Flash | 成本閘門檢查，速度快成本低 |
+`model` 欄位支援陣列，依序嘗試直到找到可用模型：
+
+| 角色 | 優先模型 | 備援 |
+|------|---------|------|
+| Hub | DeepSeek V4 Pro | — |
+| hole-finder-safety | GPT-5.6 Luna | DeepSeek V4 Pro |
+| hole-finder-feasibility | DeepSeek V4 Flash | DeepSeek V4 Pro → GPT-5.6 Luna |
+| hole-finder-cost | DeepSeek V4 Flash | DeepSeek V4 Pro → GPT-5.6 Luna |
+| explore-flash | DeepSeek V4 Flash | DeepSeek V4 Pro → GPT-5.6 Luna |
+
+> three hole-finder 只是預設範本。你可以自行增刪 `.github/agents/` 下的檔案，並在 Hub 的 `agents:` 白名單中調整。
 
 ## 使用方式
 
@@ -79,9 +85,24 @@
   context 吃緊時改走手動交接（寫 handoff 文件 → 開新 session 冷啟動）。
 
 - **`customModels`**
-  宣告 DeepSeek-V4-Pro 和 Flash 兩個模型，並設定 128K context 下的 token 配額：
-  96K 輸入 + 32K 輸出。若不設此項，Copilot 可能用較保守的預設值，
-  導致長對話提前截斷。
+  宣告 DeepSeek V4 Pro 和 Flash 兩個模型，並設定 1M context 下的 token 配額：
+  616K 輸入 + 384K 輸出（輸入 = 1M 總長 − 384K 輸出上限）。
+
+## 用內建 Explore 跑便宜模型
+
+`explore-flash` 是預設就建好的探索型 sub-agent，已用 `model: 'DeepSeek V4 Flash (deepseek)'` 鎖死便宜模型，也在 Hub 的白名單內。
+
+使用方式：需要探索 codebase 時，叫 Hub 改用 `explore-flash` 而非內建的 `Explore`。開場 prompt 加一句：
+
+```
+If you need to use the Explore subagent, use the explore-flash agent instead.
+```
+
+或是直接說改用哪個模型：
+
+```
+If you need to use the Explore subagent, switch to the DeepSeek V4 Flash model.
+```
 
 ## 設計要點
 

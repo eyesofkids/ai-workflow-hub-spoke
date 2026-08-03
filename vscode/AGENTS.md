@@ -53,8 +53,8 @@
 
 | 角色 | 模型 | 理由 |
 |------|------|------|
-| Hub | DeepSeek-V4-Pro | 規劃、裁決，需要大 context + 推理力 |
-| Spoke（安全、併發） | DeepSeek-V4-Pro | 深度推理，分析時序與攻防 |
-| Spoke（可行性、成本） | DeepSeek-V4-Flash | 搜索型審查，成本低速度快 |
+| Hub | DeepSeek V4 Pro | 規劃、裁決，需要大 context + 推理力 |
+| Spoke（安全、併發） | GPT-5.6 Luna | 深度推理，分析時序與攻防 |
+| Spoke（可行性、成本） | DeepSeek V4 Flash | 搜索型審查，成本低速度快 |
 
 ---
