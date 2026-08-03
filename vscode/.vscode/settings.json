@@ -1,0 +1,34 @@
+{
+  // ================================================================
+  // Hub-Spoke 工作流程：VS Code Copilot 單一專案設定
+  //
+  // 複製此檔到目標專案的 .vscode/settings.json
+  // 設定只對該專案生效，不影響全域
+  //
+  // 模型：DeepSeek-V4-Pro（Hub + 深度推理 Spoke）
+  //       DeepSeek-V4-Flash（一般審查 Spoke）
+  // ================================================================
+
+  // 1. 關閉 AI Agent 的自動對話歷史壓縮
+  //    hub-spoke 流程不依賴 compact，context 吃緊時改走手動交接
+  "github.copilot.chat.summarizeAgentConversationHistory.enabled": false,
+
+  // 2. 自訂模型並限制最大 Context 長度
+  //    DeepSeek-V4 支援 128K，設定 96K 輸入 + 32K 輸出
+  "github.copilot.chat.customModels": [
+    {
+      "model": "DeepSeek-V4-Pro",
+      "limits": {
+        "maxInputTokens": 96000,
+        "maxOutputTokens": 32000
+      }
+    },
+    {
+      "model": "DeepSeek-V4-Flash",
+      "limits": {
+        "maxInputTokens": 96000,
+        "maxOutputTokens": 32000
+      }
+    }
+  ]
+}
