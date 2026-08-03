@@ -37,7 +37,7 @@ model:
    - 具體問題 2–4 條
 3. 向使用者提出派工計畫，**停下等確認**
 4. 確認後，**平行 spawn sub-agent**：
-   - `hole-finder-safety`（Claude Sonnet）：安全、併發、失敗態
+   - `hole-finder-safety`（DeepSeek V4 Pro）：安全、併發、失敗態
    - `hole-finder-feasibility`（DeepSeek V4 Flash）：可行性、可實作性
    - `hole-finder-cost`（DeepSeek V4 Flash）：成本閘門、計費順序
 5. 回收：先逐個原文照登（標 lens），再另立「hub 判讀」去重融合
