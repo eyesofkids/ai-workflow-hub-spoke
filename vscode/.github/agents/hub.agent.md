@@ -1,7 +1,7 @@
 ---
 name: Hub
 description: 規劃與裁決的 coordinator。讀規劃書、發工單、派 sub-agent、融合回報。版本只從 hub 出。
-tools: ['agent', 'read', 'search', 'edit']
+tools: ['agent', 'read', 'search', 'edit', 'terminal', 'web']
 agents: ['hole-finder-feasibility', 'hole-finder-safety', 'hole-finder-cost', 'explore-flash']
 model:
   - 'DeepSeek V4 Pro (deepseek)'

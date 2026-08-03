@@ -71,10 +71,11 @@
    - `AGENTS.md` → 流程規範
 2. 調整 `.vscode/settings.json` 中的模型名稱（若 Copilot 模型清單名稱不同）
 3. 在 VS Code Chat 切換到 **Hub** agent（agents 下拉選單）
-4. 開始討論、產出 decision → plan
-5. 說「幫我審查 _docs/auth/plan_login.md」→ Hub 自動平行 spawn hole-finder
-6. 審查結果回收、融合、使用者裁決
-7. 實作完成後打 `/wrap` 或說「收尾」→ 自動四綠檢查＋產出驗收包
+4. 開始討論、產出 decision → plan 文件
+5. 說「要準備派出spoke(hole-finder) 進行審查 _docs/auth/plan_login.md，先決定劃分lens和要派多少個後，停手等我確認」→ Hub 自動平行 spawn hole-finder
+6. 審查結果回收、融合、使用者裁決（第5、6步可以視情況循環來回操作，決定要再審什麼加派然後再回收修訂文件）
+7. 和hub討論工作階段劃分，說「要開始開新對話session進實作，給我第一階段工單提示詞」
+8. 實作完成後，如果有需要可以打 `/wrap` 或說「準備交接收尾」→ 自動四綠檢查＋產出驗收包（通常只有單一階段不一定需要，建議實作時用context長度能到 1M 的模型）
 
 ## `.vscode/settings.json` 說明
 
