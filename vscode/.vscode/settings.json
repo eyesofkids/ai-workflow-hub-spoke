@@ -5,8 +5,9 @@
   // 複製此檔到目標專案的 .vscode/settings.json
   // 設定只對該專案生效，不影響全域
   //
-  // 模型：DeepSeek V4 Pro（Hub + 深度推理 Spoke）
-  //       DeepSeek V4 Flash（一般審查 Spoke）
+  // 模型：DeepSeek V4 Pro（Hub）
+  //       DeepSeek V4 Flash（Spoke 預設）
+  //       GPT-5.6 Luna（Spoke 備援）
   // ================================================================
 
   // 1. 關閉 AI Agent 的自動對話歷史壓縮
@@ -29,6 +30,13 @@
       "limits": {
         "maxInputTokens": 616000,
         "maxOutputTokens": 384000
+      }
+    },
+    {
+      "model": "GPT-5.6 Luna",
+      "limits": {
+        "maxInputTokens": 922000,
+        "maxOutputTokens": 128000
       }
     }
   ]
