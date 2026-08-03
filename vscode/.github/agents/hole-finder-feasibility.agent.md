@@ -6,6 +6,7 @@ model:
   - 'DeepSeek V4 Flash (deepseek)'
   - 'DeepSeek V4 Pro (deepseek)'
   - 'GPT-5.6 Luna (openai)'
+  - 'Gemini 3.1 Flash Lite (gemini)'
 user-invocable: false
 ---
 

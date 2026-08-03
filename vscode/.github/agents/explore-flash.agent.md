@@ -4,8 +4,6 @@ description: 快速探索 codebase。預設使用 DeepSeek V4 Flash。用於讀�
 tools: ['read', 'search']
 model:
   - 'DeepSeek V4 Flash (deepseek)'
-  - 'DeepSeek V4 Pro (deepseek)'
-  - 'GPT-5.6 Luna (openai)'
 user-invocable: false
 ---
 
