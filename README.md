@@ -55,9 +55,22 @@ https://medium.com/@eddychang_86557/%E5%85%B6%E5%AF%A6%E6%88%91%E4%B8%8D%E6%87%8
 | [/find-holes](.claude/skills/find-holes/SKILL.md) | 對規劃書派「找漏洞 spoke」：hub 裁剪 need-to-know 工單，派 1–3 個不同視角（可行性／失敗態與併發／成本閘門與安全）的唯讀 sub-agent 找漏洞，回收意見清單交使用者裁決。spoke 只產意見、不產裁決。 |
 | [/wrap](.claude/skills/wrap/SKILL.md) | 實作收尾：自檢 test/lint/tsc/build 四綠、確認 report/runbook/issue_log 齊備、產出使用者手測清單與 diff 對照摘要。context 吃緊未完工時走「中途交接」模式，寫 handoff 文件後關 session、新 session 冷啟動。 |
 
-### `.claude/agents/` — 找漏洞 sub-agent
+### `.claude/agents/` — sub-agent 定義
 
-[hole-finder.md](.claude/agents/hole-finder.md)：`/find-holes` 派工時使用的 sub-agent 定義（`subagent_type: hole-finder`）。模型 sonnet、**唯讀工具**（Read/Grep/Glob），只依 hub 提供的 need-to-know 工單工作：只讀工單允許的檔案、不得瀏覽 `_docs/`、前提不受審。產出限定為「觀察＋依據」清單——不產裁決、不給嚴重度、不提替代設計、不碰「做不做」；回報固定以「採用與否由 hub 與使用者裁決」收尾。
+`/find-holes` 派工用的四個 spoke。全部**唯讀工具**（Read/Grep/Glob），共用同一套工單紀律：只讀工單允許的檔案、不得瀏覽 `_docs/`、前提不受審；產出限定為「觀察＋依據」清單——不產裁決、不給嚴重度、不提替代設計、不碰「做不做」；回報固定以「採用與否由 hub 與使用者裁決」收尾。差別只在 lens 與模型：
+
+| Agent | lens | 模型 |
+| --- | --- | --- |
+| [hole-finder-feasibility.md](.claude/agents/hole-finder-feasibility.md) | 技術做得到嗎、需要什麼依賴、既有機制真的涵蓋了嗎（引用即驗證） | sonnet |
+| [hole-finder-safety.md](.claude/agents/hole-finder-safety.md) | 併發競態、失敗態、輸入驗證、資料洩漏——洞本身吃深推理 | opus |
+| [hole-finder-cost.md](.claude/agents/hole-finder-cost.md) | 計費呼叫的限額檢查在不在呼叫之前、pre-check、超限後的成本 | sonnet |
+| [hole-finder.md](.claude/agents/hole-finder.md) | 通用 fallback：三種 lens 都不合時用，lens 由 hub 在 prompt 中臨時指定 | sonnet |
+
+模型是預設值不是鎖死——hub 在派工計畫中可提議以 Agent 呼叫的 `model` 參數覆蓋升級（例如把 feasibility 拉到 opus），由使用者拍板。
+
+### `.claude/agents/explore-haiku.md` — 便宜探索 sub-agent
+
+[explore-haiku.md](.claude/agents/explore-haiku.md)：**與找漏洞流程無關**，不進 `/find-holes` 派工。它是內建 `general-purpose` agent 的便宜替代——同樣做大範圍讀檔偵察（AGENTS.md 的「context 防火牆」），但模型鎖 haiku、工具限唯讀三件。需要時在派工前指明用它，而非讓 `general-purpose` 走繼承模型。
 
 ### `.claude/hooks/` — context 用量絆線
 

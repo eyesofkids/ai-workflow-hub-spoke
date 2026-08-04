@@ -50,9 +50,22 @@ Defines the full set of working rules, highlights include:
 | [/find-holes](.claude/skills/find-holes/SKILL.md) | Dispatches "hole-finder spokes" against a plan document: the hub trims a need-to-know work ticket, dispatches 1–3 read-only sub-agents with distinct lenses (feasibility / failure modes & concurrency / cost gates & security) to find holes, then collects their observations for the user to adjudicate. Spokes produce opinions only, never verdicts. |
 | [/wrap](.claude/skills/wrap/SKILL.md) | Implementation wrap-up: self-check that test/lint/tsc/build are all green, confirm report/runbook/issue_log are complete, produce a manual-test checklist and a diff-versus-plan summary for the user. When context runs low before the work is done, switch to "mid-work handoff" mode — write a handoff document, close the session, and cold-start a new one. |
 
-### `.claude/agents/` — Hole-finder sub-agent
+### `.claude/agents/` — Sub-agent definitions
 
-[hole-finder.md](.claude/agents/hole-finder.md): the sub-agent definition used by `/find-holes` dispatch (`subagent_type: hole-finder`). Model sonnet, **read-only tools** (Read/Grep/Glob), working only from the need-to-know ticket provided by the hub: it reads only the files the ticket allows, may not browse `_docs/`, and premises are not under review. Its output is restricted to a list of "observation + basis" — no verdicts, no severity grades, no alternative designs, and it never touches "whether to do it"; every report ends with "adoption is decided by the hub and the user."
+The four spokes `/find-holes` dispatches. All use **read-only tools** (Read/Grep/Glob) and share one ticket discipline: read only the files the ticket allows, never browse `_docs/`, premises are not under review; output is restricted to a list of "observation + basis" — no verdicts, no severity grades, no alternative designs, never touching "whether to do it"; every report ends with "adoption is decided by the hub and the user." Only the lens and the model differ:
+
+| Agent | Lens | Model |
+| --- | --- | --- |
+| [hole-finder-feasibility.md](.claude/agents/hole-finder-feasibility.md) | Is it technically doable, what dependencies it needs, whether the existing mechanism really covers it (verify-on-cite) | sonnet |
+| [hole-finder-safety.md](.claude/agents/hole-finder-safety.md) | Concurrency races, failure modes, input validation, data leaks — holes that demand deep reasoning | opus |
+| [hole-finder-cost.md](.claude/agents/hole-finder-cost.md) | Whether the quota check precedes the billable call, pre-checks, cost once the limit is exceeded | sonnet |
+| [hole-finder.md](.claude/agents/hole-finder.md) | Generic fallback for plans none of the three lenses fits; the hub specifies the lens in the prompt | sonnet |
+
+The models are defaults, not locks — in the dispatch plan the hub may propose overriding them via the `model` parameter on the Agent call (e.g. pulling feasibility up to opus), with the user making the call.
+
+### `.claude/agents/explore-haiku.md` — Cheap exploration sub-agent
+
+[explore-haiku.md](.claude/agents/explore-haiku.md): **unrelated to the hole-finding workflow** — it is never part of `/find-holes` dispatch. It is a cheap substitute for the built-in `general-purpose` agent, doing the same broad file-reading reconnaissance (the "context firewall" in AGENTS.md) but with the model pinned to haiku and tools limited to the read-only three. Name it explicitly when dispatching, instead of letting `general-purpose` run on the inherited model.
 
 ### `.claude/hooks/` — Context-usage tripwire
 

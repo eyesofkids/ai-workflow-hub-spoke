@@ -15,10 +15,15 @@ You are the hub. This skill hands the specified scope of a plan document to clea
    - **A list of premises** (marked "premise — not under review"): the user's settled decisions from the top of the plan, and the conclusions of verified facts (one conclusion line only — no facts file)
    - **Concrete questions** (2–4 per spoke, e.g. "Does the pairing rule in §3.2 have holes under concurrency?")
    - **Forbidden content**: historical version chains, deprecated plan documents, decision-process background, any `_docs` paths. Precedents may only be given as a one-line criterion ("the yardstick, not the corpse" — see the provenance rules in AGENTS.md).
-3. **Present the dispatch plan and stop for confirmation**: default to the `hole-finder` agent (`subagent_type: hole-finder`, model sonnet, read-only tools). Before dispatching you **must** present the plan to the user and **explicitly ask, stop, and wait for confirmation; do not call Agent without approval**:
+3. **Present the dispatch plan and stop for confirmation**: pick from the three lens agents according to the plan's content (all read-only):
+   - `hole-finder-feasibility` (sonnet): feasibility, implementability, verify-on-cite
+   - `hole-finder-safety` (opus): concurrency races, failure modes, input validation, data leaks
+   - `hole-finder-cost` (sonnet): billable-call gate ordering, pre-checks, over-limit behavior
+
+   For a plan none of the three lenses fits, fall back to the generic `hole-finder` (sonnet) and specify a custom lens in the prompt yourself. Before dispatching you **must** present the plan to the user and **explicitly ask, stop, and wait for confirmation; do not call Agent without approval**:
    - How many to dispatch (1–3)
-   - Each one's lens (chosen from the plan's content: feasibility / failure modes & concurrency / cost gates & security)
-   - Each one's model (search-type lenses use the default sonnet; for lenses where the hole itself demands deep reasoning — concurrency timing, security attack/defense — recommend upgrading via the `model` parameter to opus/fable, with reasons)
+   - Each one's agent and lens
+   - Each one's model (use the agent's default; if this particular hole demands deeper reasoning, override via the `model` parameter on the Agent call to upgrade to opus/fable, with reasons)
    - A summary of the ticket contents (which sections, which premises, which questions were included)
    Apply the user's changes to count / models / lenses exactly as given. Dispatch only after confirmation; every prompt must contain:
    - The ticket contents (step 2)

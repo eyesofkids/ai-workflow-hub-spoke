@@ -15,10 +15,15 @@ description: 對規劃書派「找漏洞 spoke」（sub-agent）：hub 裁剪 ne
    - **前提清單**（標明「前提，不受審」）：規劃書開頭的使用者已定案決策、已驗事實的結論（只給結論一行，不給 facts 檔）
    - **具體問題**（每個 spoke 2–4 條，如「§3.2 的配對規則在併發下有沒有洞？」）
    - **禁止內容**：歷史版本鏈、已廢棄規劃文件、決策過程背景、任何 `_docs` 路徑。先例只能以一行判準形式給（「給尺不給屍」，見 AGENTS.md 出處三規則）。
-3. **提出派工計畫，停下等確認**：預設 `hole-finder` agent（`subagent_type: hole-finder`，模型 sonnet、唯讀工具）。派工前**必須**先向使用者列出計畫並**明確詢問、停下等確認,未獲同意不得呼叫 Agent**：
+3. **提出派工計畫，停下等確認**：依規劃內容從三個 lens agent 中選（全部唯讀）：
+   - `hole-finder-feasibility`（sonnet）：可行性、可實作性、引用即驗證
+   - `hole-finder-safety`（opus）：併發競態、失敗態、輸入驗證、資料洩漏
+   - `hole-finder-cost`（sonnet）：計費呼叫閘門順序、pre-check、超限行為
+
+   三種 lens 都不合的規劃書，改用通用 `hole-finder`（sonnet），由你在 prompt 中指定自訂 lens。派工前**必須**先向使用者列出計畫並**明確詢問、停下等確認,未獲同意不得呼叫 Agent**：
    - 派幾個（1–3）
-   - 各自的 lens（依規劃內容選：可行性／失敗態與併發／成本閘門與安全）
-   - 各自的模型（搜索型 lens 用預設 sonnet；洞本身需要深推理的 lens——併發時序、安全攻防——建議以 `model` 參數升級 opus／fable,說明理由）
+   - 各自的 agent 與 lens
+   - 各自的模型（用 agent 預設；若該次的洞需要更深推理，可在 Agent 呼叫以 `model` 參數覆蓋升級 opus／fable,說明理由）
    - 工單內容摘要（給了哪些段落、哪些前提、哪些問題）
    使用者對數量／模型／lens 的修改一律照辦。確認後才派,每個 prompt 必含：
    - 工單內容（第 2 步）
