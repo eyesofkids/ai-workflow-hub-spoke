@@ -1,0 +1,38 @@
+[
+  {
+    "name": "DeepSeek V4 Pro",
+    "vendor": "deepseek",
+    "models": [
+      {
+        "name": "DeepSeek V4 Pro",
+        "id": "DeepSeek V4 Pro",
+        "maxInputTokens": 616000,
+        "maxOutputTokens": 384000
+      }
+    ]
+  },
+  {
+    "name": "DeepSeek V4 Flash",
+    "vendor": "deepseek",
+    "models": [
+      {
+        "name": "DeepSeek V4 Flash",
+        "id": "DeepSeek V4 Flash",
+        "maxInputTokens": 616000,
+        "maxOutputTokens": 384000
+      }
+    ]
+  },
+  {
+    "name": "GPT-5.6 Luna",
+    "vendor": "openai",
+    "models": [
+      {
+        "name": "GPT-5.6 Luna",
+        "id": "GPT-5.6 Luna",
+        "maxInputTokens": 922000,
+        "maxOutputTokens": 128000
+      }
+    ]
+  }
+]

@@ -5,39 +5,10 @@
   // 複製此檔到目標專案的 .vscode/settings.json
   // 設定只對該專案生效，不影響全域
   //
-  // 模型：DeepSeek V4 Pro（Hub）
-  //       DeepSeek V4 Flash（Spoke 預設）
-  //       GPT-5.6 Luna（Spoke 備援）
+  // BYOK 模型改由 chatLanguageModels.json 管理，不在此處設定
   // ================================================================
 
-  // 1. 關閉 AI Agent 的自動對話歷史壓縮
-  //    hub-spoke 流程不依賴 compact，context 吃緊時改走手動交接
-  "github.copilot.chat.summarizeAgentConversationHistory.enabled": false,
-
-  // 2. 自訂模型並限制最大 Context 長度
-  //    DeepSeek V4 支援 1M context，輸出最大 384K
-  //    輸入額度 = 1,000,000 - 384,000 = 616,000
-  "github.copilot.chat.customModels": [
-    {
-      "model": "DeepSeek V4 Pro",
-      "limits": {
-        "maxInputTokens": 616000,
-        "maxOutputTokens": 384000
-      }
-    },
-    {
-      "model": "DeepSeek V4 Flash",
-      "limits": {
-        "maxInputTokens": 616000,
-        "maxOutputTokens": 384000
-      }
-    },
-    {
-      "model": "GPT-5.6 Luna",
-      "limits": {
-        "maxInputTokens": 922000,
-        "maxOutputTokens": 128000
-      }
-    }
-  ]
+  // 關閉 AI Agent 的自動對話歷史壓縮
+  // hub-spoke 流程不依賴 compact，context 吃緊時改走手動交接
+  "github.copilot.chat.summarizeAgentConversationHistory.enabled": false
 }

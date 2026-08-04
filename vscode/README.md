@@ -35,7 +35,8 @@
 專案根目錄/
 ├── AGENTS.md                                ← 流程規範
 ├── .vscode/
-│   └── settings.json                        ← 專案級 Copilot 設定
+│   ├── settings.json                        ← 關閉 auto-compact
+│   └── chatLanguageModels.json              ← BYOK 模型 token 上限
 └── .github/
     ├── agents/
     │   ├── hub.agent.md                     ← Hub coordinator（DeepSeek V4 Pro）
@@ -65,7 +66,8 @@
 ## 使用方式
 
 1. 將以下檔案複製到目標專案根目錄：
-   - `.vscode/settings.json` → 專案級 Copilot 設定（關閉 auto-compact + 自訂模型 token 上限）
+   - `.vscode/settings.json` → 關閉 auto-compact
+   - `.vscode/chatLanguageModels.json` → BYOK 模型宣告與 token 上限
    - `.github/agents/` → Hub + 三個 hole-finder spoke
    - `.github/skills/wrap/` → 收尾 skill（`/wrap`）
    - `AGENTS.md` → 流程規範
@@ -77,17 +79,14 @@
 7. 和hub討論工作階段劃分，說「要開始開新對話session進實作，給我第一階段工單提示詞」
 8. 實作完成後，如果有需要可以打 `/wrap` 或說「準備交接收尾」→ 自動四綠檢查＋產出驗收包（通常只有單一階段不一定需要，建議實作時用context長度能到 1M 的模型）
 
-## `.vscode/settings.json` 說明
+## `.vscode/settings.json` 與 `chatLanguageModels.json` 說明
 
-專案級 VS Code Copilot 設定，只對該專案生效：
+- **`settings.json`** → `summarizeAgentConversationHistory.enabled: false`
+  關閉 Copilot 的自動對話歷史壓縮。hub-spoke 流程不依賴 auto-compact。
 
-- **`summarizeAgentConversationHistory.enabled: false`**
-  關閉 Copilot 的自動對話歷史壓縮。hub-spoke 流程不依賴 auto-compact，
-  context 吃緊時改走手動交接（寫 handoff 文件 → 開新 session 冷啟動）。
-
-- **`customModels`**
-  宣告 DeepSeek V4 Pro、Flash 及 GPT-5.6 Luna 三個模型，並設定 DeepSeek V4 的 token 配額：
-  616K 輸入 + 384K 輸出（輸入 = 1M 總長 − 384K 輸出上限）。
+- **`chatLanguageModels.json`** → BYOK 模型宣告
+  新版 Copilot 改由此獨立設定檔管理自備模型。宣告 DeepSeek V4 Pro、Flash、
+  GPT-5.6 Luna 三個模型及其 token 配額。
 
 ## 用內建 Explore 跑便宜模型
 
