@@ -43,7 +43,8 @@
     │   ├── explore-flash.agent.md           ← 探索型 sub-agent（DeepSeek V4 Flash）
     │   ├── hole-finder-feasibility.agent.md ← 可行性 lens（DeepSeek V4 Flash）
     │   ├── hole-finder-safety.agent.md      ← 安全/併發 lens（GPT-5.6 Luna）
-    │   └── hole-finder-cost.agent.md        ← 成本閘門 lens（DeepSeek V4 Flash）
+    │   ├── hole-finder-cost.agent.md        ← 成本閘門 lens（DeepSeek V4 Flash）
+    │   └── dispatch-broker.agent.md         ← 外派委託窗口（DeepSeek V4 Flash）
     └── skills/
         └── wrap/
             └── SKILL.md                     ← 收尾 skill（/wrap）
@@ -60,15 +61,31 @@
 | hole-finder-feasibility | DeepSeek V4 Flash | DeepSeek V4 Pro | GPT-5.6 Luna |
 | hole-finder-cost | DeepSeek V4 Flash | DeepSeek V4 Pro | GPT-5.6 Luna |
 | explore-flash | DeepSeek V4 Flash | DeepSeek V4 Pro | GPT-5.6 Luna |
+| dispatch-broker | DeepSeek V4 Flash | Gemini 3.1 Flash Lite | — |
 
 > 三個 hole-finder 只是工具箱範本，Hub 視範圍自行決定派幾個。你可以增刪 `.github/agents/` 下的檔案，並在 Hub 的 `agents:` 白名單調整。
+
+## 接 Claude Code 的外派委託（dispatch-broker）
+
+`dispatch-broker` 不在 Hub 的白名單內，兩者是平行角色：本端獨立作業走 Hub，接外部委託走 broker。它存在的理由是**跨供應商的異質視角**——Claude Code 的 subagent 一律跑在 Anthropic 模型上，要拿 DeepSeek／Gemini 的乾淨視角只能外派過來。
+
+它的 `tools` 只有 `['agent']`，**連 read 都沒有**：它握有的一切來自對話窗，結構上不可能去翻 `_docs/`。它只做三件事——派 spoke、形式稽核、原文回收，不看內容、不下判斷。
+
+使用方式：
+
+1. 在 Claude Code 那端跑 `/find-holes`，選「外派模式」，hub 會產出一段自包含工單文字
+2. VS Code Chat 切換到 **dispatch-broker**，整段貼進去
+3. broker 平行派 hole-finder、稽核、回收，輸出「稽核表＋各 spoke 原文」
+4. 整段貼回 Claude Code，由 hub 融合判讀、交使用者裁決
+
+> **稽核的界線**：spoke 有 `['read','search']`，範圍是整個 workspace，VS Code 端沒有路徑白名單機制。broker 只能事後從「回報引用的路徑」與「spoke 自陳開啟過的檔案清單」抓越界——**抓得到「說了越界」，抓不到「越界了但沒說」**。隔離仍然靠 prompt 約束，broker 給的是流程監督與可稽核性，不是隔離保證。
 
 ## 使用方式
 
 1. 將以下檔案複製到目標專案根目錄：
    - `.vscode/settings.json` → 關閉 auto-compact
    - `.vscode/chatLanguageModels.json` → BYOK 模型宣告與 token 上限
-   - `.github/agents/` → Hub + 三個 hole-finder spoke
+   - `.github/agents/` → Hub + 三個 hole-finder spoke + 外派委託窗口（dispatch-broker）
    - `.github/skills/wrap/` → 收尾 skill（`/wrap`）
    - `AGENTS.md` → 流程規範
 2. 調整 `.vscode/settings.json` 中的模型名稱（若 Copilot 模型清單名稱不同）
