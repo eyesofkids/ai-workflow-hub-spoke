@@ -52,7 +52,7 @@ https://medium.com/@eddychang_86557/%E5%85%B6%E5%AF%A6%E6%88%91%E4%B8%8D%E6%87%8
 
 | Skill | 用途 |
 | --- | --- |
-| [/find-holes](.claude/skills/find-holes/SKILL.md) | 對規劃書派「找漏洞 spoke」：hub 裁剪 need-to-know 工單，派 1–3 個不同視角（可行性／失敗態與併發／成本閘門與安全）的唯讀 sub-agent 找漏洞，回收意見清單交使用者裁決。spoke 只產意見、不產裁決。 |
+| [/find-holes](.claude/skills/find-holes/SKILL.md) | 對規劃書派「找漏洞 spoke」：hub 裁剪 need-to-know 工單，派 1–3 個不同視角（可行性／失敗態與併發／成本閘門與安全）的唯讀 sub-agent 找漏洞，回收意見清單交使用者裁決。spoke 只產意見、不產裁決。另有**外派模式**：hub 改為產出一段自包含工單文字，由使用者貼進 [vscode/](vscode/) 版的 `dispatch-broker` 對話窗，拿非 Anthropic 模型的異質視角，再把結果貼回來融合。 |
 | [/wrap](.claude/skills/wrap/SKILL.md) | 實作收尾：自檢 test/lint/tsc/build 四綠、確認 report/runbook/issue_log 齊備、產出使用者手測清單與 diff 對照摘要。context 吃緊未完工時走「中途交接」模式，寫 handoff 文件後關 session、新 session 冷啟動。 |
 
 ### `.claude/agents/` — sub-agent 定義

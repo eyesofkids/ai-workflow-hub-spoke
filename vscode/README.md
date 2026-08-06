@@ -1,5 +1,11 @@
 # ai-workflow-hub-spoke（VS Code Copilot 版）
 
+## 2026-08-06: 這方式派出的spoke subagent有嚴重問題，先暫時不要使用。以下是說明
+
+VS Code派出的subagent經測試和檢視log後，發現context會塞滿90%以上的和要作的事無關的context，有很大一部份是VS Code內建的一大串，然後會繼承整個專案的`AGENTS.md`這有可能浪費token、造成context污染之外，也會拖慢整個執行效率，甚至會觸發rate limit(TPM)的情況。
+
+---
+
 一套給 **VS Code Copilot Agent Mode** 使用的 AI 協作流程規範，以「主從形態（hub-spoke）」組織「規劃 → 實作 → 驗收」的完整開發流程。
 
 > **模型配置**：DeepSeek V4 Pro 當 Hub，DeepSeek V4 Flash 為 spoke 預設，GPT-5.6 Luna 為備援
@@ -43,7 +49,8 @@
     │   ├── explore-flash.agent.md           ← 探索型 sub-agent（DeepSeek V4 Flash）
     │   ├── hole-finder-feasibility.agent.md ← 可行性 lens（DeepSeek V4 Flash）
     │   ├── hole-finder-safety.agent.md      ← 安全/併發 lens（GPT-5.6 Luna）
-    │   └── hole-finder-cost.agent.md        ← 成本閘門 lens（DeepSeek V4 Flash）
+    │   ├── hole-finder-cost.agent.md        ← 成本閘門 lens（DeepSeek V4 Flash）
+    │   └── dispatch-broker.agent.md         ← 外派委託窗口（DeepSeek V4 Flash）
     └── skills/
         └── wrap/
             └── SKILL.md                     ← 收尾 skill（/wrap）
@@ -60,15 +67,40 @@
 | hole-finder-feasibility | DeepSeek V4 Flash | DeepSeek V4 Pro | GPT-5.6 Luna |
 | hole-finder-cost | DeepSeek V4 Flash | DeepSeek V4 Pro | GPT-5.6 Luna |
 | explore-flash | DeepSeek V4 Flash | DeepSeek V4 Pro | GPT-5.6 Luna |
+| dispatch-broker | DeepSeek V4 Flash | Gemini 3.1 Flash Lite | — |
 
 > 三個 hole-finder 只是工具箱範本，Hub 視範圍自行決定派幾個。你可以增刪 `.github/agents/` 下的檔案，並在 Hub 的 `agents:` 白名單調整。
+
+## 接 Claude Code 的外派委託（dispatch-broker）
+
+`dispatch-broker` 不在 Hub 的白名單內，兩者是平行角色：本端獨立作業走 Hub，接外部委託走 broker。它存在的理由是**跨供應商的異質視角**——Claude Code 的 subagent 一律跑在 Anthropic 模型上，要拿 DeepSeek／Gemini 的乾淨視角只能外派過來。
+
+它的 `tools` 只有 `['agent']`，**連 read 都沒有**：它握有的一切來自對話窗，結構上不可能去翻 `_docs/`。它只做三件事——派 spoke、形式稽核、原文回收，不看內容、不下判斷。
+
+使用方式：
+
+1. 在 Claude Code 那端跑 `/find-holes`，選「外派模式」，hub 會產出一段自包含工單文字
+2. VS Code Chat 切換到 **dispatch-broker**，整段貼進去
+3. broker 平行派 hole-finder、稽核、回收，輸出「稽核表＋各 spoke 原文」
+4. 整段貼回 Claude Code，由 hub 融合判讀、交使用者裁決
+
+> **稽核的界線**：spoke 有 `['read','search']`，範圍是整個 workspace，VS Code 端沒有路徑白名單機制。broker 只能事後從「回報引用的路徑」與「spoke 自陳開啟過的檔案清單」抓越界——**抓得到「說了越界」，抓不到「越界了但沒說」**。隔離仍然靠 prompt 約束，broker 給的是流程監督與可稽核性，不是隔離保證。
+
+### 報告過長時
+
+三個 spoke 的原文加起來可能超出對話窗能穩定複製的長度。broker 預設 `tools: ['agent']` 沒有寫檔能力（這是刻意的——它因此碰不到 `_docs/`），兩個解法：
+
+- **分段索取**：先要「稽核表 ＋ 第一個 spoke 原文」，複製完再要下一個。輸出骨架沒有規定必須一次全給，不用改任何設定。
+- **臨時開寫檔**：在 `dispatch-broker.agent.md` 的 `tools` 加 `'edit'`，讓它把完整報告落檔到暫存目錄（如 `tmp/spoke/`），Claude Code 那端直接讀路徑。跑完把 `'edit'` 拿掉。
+
+開了 `edit` 就失去「broker 碰不到檔案系統」這個硬保證——它同時獲得讀檔的路，`_docs/` 禁令降級成 prompt 約束，與 spoke 同級。落檔時要明確指定路徑並交代**不得寫入 `_docs/`、不得修改既有檔案**，落檔目錄也應進 `.gitignore`：spoke 回報不是文件版本，不該進版控。
 
 ## 使用方式
 
 1. 將以下檔案複製到目標專案根目錄：
    - `.vscode/settings.json` → 關閉 auto-compact
    - `.vscode/chatLanguageModels.json` → BYOK 模型宣告與 token 上限
-   - `.github/agents/` → Hub + 三個 hole-finder spoke
+   - `.github/agents/` → Hub + 三個 hole-finder spoke + 外派委託窗口（dispatch-broker）
    - `.github/skills/wrap/` → 收尾 skill（`/wrap`）
    - `AGENTS.md` → 流程規範
 2. 調整 `.vscode/settings.json` 中的模型名稱（若 Copilot 模型清單名稱不同）

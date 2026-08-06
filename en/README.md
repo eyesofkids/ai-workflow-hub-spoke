@@ -47,7 +47,7 @@ Defines the full set of working rules, highlights include:
 
 | Skill | Purpose |
 | --- | --- |
-| [/find-holes](.claude/skills/find-holes/SKILL.md) | Dispatches "hole-finder spokes" against a plan document: the hub trims a need-to-know work ticket, dispatches 1–3 read-only sub-agents with distinct lenses (feasibility / failure modes & concurrency / cost gates & security) to find holes, then collects their observations for the user to adjudicate. Spokes produce opinions only, never verdicts. |
+| [/find-holes](.claude/skills/find-holes/SKILL.md) | Dispatches "hole-finder spokes" against a plan document: the hub trims a need-to-know work ticket, dispatches 1–3 read-only sub-agents with distinct lenses (feasibility / failure modes & concurrency / cost gates & security) to find holes, then collects their observations for the user to adjudicate. Spokes produce opinions only, never verdicts. There is also an **outsourced mode**: the hub emits a self-contained ticket as copyable text, the user pastes it into the `dispatch-broker` chat in the [vscode/](../vscode/) edition to get a heterogeneous perspective from a non-Anthropic model, then pastes the result back for synthesis. |
 | [/wrap](.claude/skills/wrap/SKILL.md) | Implementation wrap-up: self-check that test/lint/tsc/build are all green, confirm report/runbook/issue_log are complete, produce a manual-test checklist and a diff-versus-plan summary for the user. When context runs low before the work is done, switch to "mid-work handoff" mode — write a handoff document, close the session, and cold-start a new one. |
 
 ### `.claude/agents/` — Sub-agent definitions
