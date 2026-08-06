@@ -1,5 +1,11 @@
 # ai-workflow-hub-spoke（VS Code Copilot 版）
 
+## 2026-08-06: 這方式派出的spoke subagent有嚴重問題，先暫時不要使用。以下是說明
+
+VS Code派出的subagent經測試和檢視log後，發現context會塞滿90%以上的和要作的事無關的context，有很大一部份是VS Code內建的一大串，然後會繼承整個專案的`AGENTS.md`這有可能浪費token、造成context污染之外，也會拖慢整個執行效率，甚至會觸發rate limit(TPM)的情況。
+
+---
+
 一套給 **VS Code Copilot Agent Mode** 使用的 AI 協作流程規範，以「主從形態（hub-spoke）」組織「規劃 → 實作 → 驗收」的完整開發流程。
 
 > **模型配置**：DeepSeek V4 Pro 當 Hub，DeepSeek V4 Flash 為 spoke 預設，GPT-5.6 Luna 為備援
