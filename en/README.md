@@ -1,5 +1,9 @@
 # ai-workflow-hub-spoke
 
+## 2026-08-08: The methodology is correct, but the tools (skill + agent) are not very effective. Based on unverified testing results in the Claude Code subscription mode, the internally assigned spoken subagent has a lens percentage for support tickets that is possibly less than 3%. This is particularly problematic for larger projects, and its effectiveness is difficult to measure. Maybe this is a common problem with custom subagents.
+
+---
+
 [中文版](../README.md)
 
 A set of **AI collaboration workflow conventions** for Claude Code, organizing the full "plan → implement → accept" development cycle in a **hub-spoke** structure. This project contains no application code — it consists of reusable process documents and Claude Code skills, and serves as a template for adopting this working model in other projects.

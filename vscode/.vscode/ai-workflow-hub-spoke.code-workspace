@@ -5,9 +5,6 @@
 		},
 		{
 			"path": "../../../ai-workflow-hub-spoke-dispatcher"
-		},
-		{
-			"path": "../../../mini-todo"
 		}
 	],
 	"settings": {}
