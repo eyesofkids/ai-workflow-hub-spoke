@@ -1,5 +1,9 @@
 # ai-workflow-hub-spoke
 
+## 2026-08-08: 方法論是正確的，但這工具(skill＋agent)是達不到什麼成效的。經不能完全証實的實測結果在Claude Code訂閱制裡，內派的spoke subagent。工單的lens佔比少到可能3%不到，在愈是有規模的專案愈不理想，而且也無法量度它的各種情況，達不到成效。這有可能是自訂subagent的通病。
+
+---
+
 [README for English ](en/README.md)
 
 [for vscode](./vscode/README.md)

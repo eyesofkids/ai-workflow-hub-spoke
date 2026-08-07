@@ -4,7 +4,7 @@
 			"path": "../.."
 		},
 		{
-			"path": "../../../ai-workflow-hub-spoke-mcp"
+			"path": "../../../ai-workflow-hub-spoke-dispatcher"
 		}
 	],
 	"settings": {}
