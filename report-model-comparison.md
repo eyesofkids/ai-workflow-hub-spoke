@@ -1,318 +1,395 @@
-# 同一份工單，派了十七次
+# The same ticket, dispatched seventeen times
 
-派審查的目的只有一個：**找到你自己看不見的問題**。所以評價一個模型適不適合這件事，
-只有兩個維度——**它找到多少**，以及**它說的對不對**。
+There is only one reason to dispatch a review: **to find the problems you cannot see yourself.**
+So there are only two dimensions on which a model can be judged for this job — **how much it
+finds**, and **whether what it says is true**.
 
-這份實測要回答的是：
+This test set out to answer three questions:
 
-1. **不同模型找到的東西差多少？**
-2. **會不會有些模型講得比較準？**
-3. **跑一次就夠了嗎？**
+1. **How much does what different models find actually differ?**
+2. **Are some models more accurate than others?**
+3. **Is one run enough?**
 
-結論先講：**涵蓋率與模型的價格、級距、reasoning effort 全都沒有對應關係；
-事實正確性也一樣。** 而這件事有一個直接的後果——**當便宜的模型達得到同樣的涵蓋率，
-昂貴的旗艦模型在「審查」這個用途上就失去了使用的理由。** 以下是數據。
+The conclusion first: **coverage has no relationship to a model's price, its tier, or its
+reasoning effort — and neither does factual accuracy.** That has a direct consequence: **once a
+cheap model reaches the same coverage, an expensive high-end model has no remaining reason to be
+used for review.** Here is the data.
 
 ---
 
-## 怎麼測的
+## How it was tested
 
-| 項目 | 內容 |
+| Item | Detail |
 | --- | --- |
-| 素材 | 一個真實專案的規劃書段落（權限檢查時機 ＋ API 設計），不是玩具範例 |
-| 形態 | **同一份工單派十七次，十六次成功**——外派十三次（Anthropic ×3／OpenAI ×4／DeepSeek ×3／Gemini ×3）、內派四次 |
-| 控制 | 素材、問題、允許讀取的檔案清單、lens 定義**全部逐字重用，`diff` 驗過** |
-| 基準 | **19 條發現**——每一條都由我親自開檔驗證過確實成立，命中率以此為分母 |
-| 總成本 | **$2.5186** |
+| Material | A section of a design document from a real project (when permissions are checked + API design), not a toy example |
+| Shape | **The same ticket dispatched seventeen times, sixteen of them successful** — thirteen external (Anthropic ×3 / OpenAI ×4 / DeepSeek ×3 / Gemini ×3) and four in-process |
+| Controls | The material, the questions, the read allowlist, and the lens definitions were **reused verbatim, verified with `diff`** |
+| Baseline | **19 findings** — every one of them opened and verified by me as genuinely holding. That is the denominator |
+| Total cost | **$2.5186** |
 
-**「同一份工單逐字重用」是這份實測唯一的價值來源。** 只要有一個變數沒控制住，
-後面所有比較都不算數。
+**Reusing one ticket verbatim is the only thing that makes this test worth anything.** Let a
+single variable slip and every comparison below stops counting.
 
 ---
 
-## 一、涵蓋率：便宜的模型達得到同樣的水準
+## 1. Coverage: cheap models reach the same level
 
-| 模型 | 命中／19 | 成本 |
+| Model | Hits / 19 | Cost |
 | --- | ---: | ---: |
-| 內派 `opus-5`（單模型） | **18** | 訂閱額度 |
-| **外派 `deepseek-v4-flash`** | **14** | **$0.0095** |
-| 外派 `opus-5`（單模型） | 14 | $0.5431 |
-| 外派 `gpt-5.6-sol` | 13 | $0.8320 |
-| 外派 `gpt-5.6-terra` | 10 | $0.2155 |
-| 外派 `gpt-5.6-luna` | 8 | $0.0255 |
-| 外派 `gemini-3.6-flash` | 7 | $0.1802 |
-| **外派 `sonnet-5`（單模型）** | **6** | **$0.2468** |
-| 外派 `gemini-3.5-flash-lite` | 5 | $0.0287 |
+| In-process `opus-5` (single model) | **18** | subscription |
+| **External `deepseek-v4-flash`** | **14** | **$0.0095** |
+| External `opus-5` (single model) | 14 | $0.5431 |
+| External `gpt-5.6-sol` | 13 | $0.8320 |
+| External `gpt-5.6-terra` | 10 | $0.2155 |
+| External `gpt-5.6-luna` | 8 | $0.0255 |
+| External `gemini-3.6-flash` | 7 | $0.1802 |
+| **External `sonnet-5` (single model)** | **6** | **$0.2468** |
+| External `gemini-3.5-flash-lite` | 5 | $0.0287 |
 
-**看第二列與第三列：`deepseek-v4-flash` 與外派 `opus-5` 同樣是 14／19。**
+**Look at the second and third rows: `deepseek-v4-flash` and external `opus-5` both scored
+14/19.**
 
-不是「便宜的比較划算」——是**在這件工作上，它們找到的東西一樣多**。而涵蓋率是派審查唯一
-真正在乎的東西：你要的是問題被找出來，不是報告寫得漂亮。
+This is not "the cheap one is better value" — **on this job they found the same amount.** And
+coverage is the only thing a dispatched review really cares about: you want the problems
+surfaced, not a beautifully written report.
 
-同一張表裡還有一個更直接的：**`sonnet-5` 拿 6 條，比 `deepseek-v4-flash` 少 8 條。**
-它是旗艦，價格是後者的 26 倍。
+There is something even blunter in the same table: **`sonnet-5` got 6, eight fewer than
+`deepseek-v4-flash`.** It sits a tier above it, at 26 times the price.
 
-**這就是「失去使用價值」的意思。** 不是 opus 不好——它拿 14 條、內派那格甚至拿 18，
-那是真實的能力。但當一個成本低兩個數量級的模型在同一份工單上達到同樣的涵蓋率，
-**「為什麼要用貴的」這個問題就沒有答案了**。審查不是創作，它不需要更好的文筆或更深的
-推理，它需要的是把 19 條裡的問題翻出來——而那件事，便宜的模型做得到。
+**That is what "no remaining reason to be used" means.** Not that opus is bad — 14 externally
+and 18 in-process is real capability. But when a model costing two orders of magnitude less
+reaches the same coverage on the same ticket, **the question "why pay for the expensive one" has
+no answer left.** Review is not composition. It does not need better prose or deeper reasoning;
+it needs the 19 problems dug out — and the cheap model can do that.
 
-### 關於第一列的內派
+### About that first row: in-process dispatch
 
-內派的 `opus-5` 拿到全場最高的 18／19。**這個數字是真的，不要拿這份實測去說「內派不行」。**
+In-process `opus-5` took the highest score of the whole test, 18/19. **That number is real; do
+not use this test to argue that in-process dispatch does not work.**
 
-但有兩件事要跟它一起看。
+But two things have to be read alongside it.
 
-**這次的 context 注入量算少的。** 內派 spoke 有一段關不掉的開場 context——這次實測量到
-約 **8,700 tokens**（harness 底線 ＋ 專案的規範文件），而外派那邊送出去的 system prompt
-是 **714 字元**。這次的專案規範不大，所以干擾有限；換一個規範文件龐大的專案，那個底線
-直接膨脹。
+**The context injection was on the small side this time.** An in-process spoke carries an opening
+context it cannot switch off — measured here at roughly **8,700 tokens** (the harness floor plus
+the project's specification documents), against a system prompt of **714 characters** for the
+external path. This project's specification is not large, so the interference was limited. Point
+it at a project with a sprawling specification and that floor inflates immediately.
 
-**而且膨脹的方向跟直覺不同。** 同一份實測裡的一個反直覺發現：三支內派 spoke 讀的檔案
-全都在目標專案裡，**吃到的卻是「發起對話的那個專案」的規範文件**——
-**注入量取決於你從哪個目錄派，不是素材在哪裡。** 從不同目錄派同一份工單，差約 3 倍。
+**And it inflates in a direction that is not intuitive.** From the same test, a counter-intuitive
+finding: all three in-process spokes read files inside the target project, **yet what they were
+fed was the specification of the project the conversation started from** — **injection depends on
+which directory you dispatch from, not on where the material lives.** Dispatching the same ticket
+from different directories differed by about 3×.
 
-**而且它不只是佔位置。** 另一輪刻意投毒的實驗裡——在專案規範文件裡埋了五條與程式碼矛盾的
-假事實——spoke **把那五條也一起審了**：讀程式碼、比對、指出「這幾句在程式碼中找不到對應」。
-它沒有被騙倒，但**它花了輪次與 token 去查證那些東西，而那些力氣本來該花在待審材料上**。
-**「沒被騙」不等於「沒受影響」。**
+**And it does not just take up room.** In a separate, deliberately poisoned run — five false
+statements contradicting the code were planted in the project's specification — the spoke **went
+and reviewed those too**: read the code, compared, and reported that those sentences had no
+counterpart in it. It was not fooled, but **it spent turns and tokens verifying them, and that
+effort should have gone to the material under review.** **"Not fooled" is not the same as "not
+affected."**
 
-**而且那是 `opus-5` 的表現，那輪只測了這一個模型。** 換成能力較弱的型號，
-**不保證它會回去查證**——它可能直接採信。所以注入的 context 對強弱模型是兩種不同的負擔：
-**強的浪費力氣去推翻它，弱的可能直接被它帶著走。** 兩種都是問題，只是形態不同。
+**And that was `opus-5`; only that one model was tested in that round.** With a weaker model there
+is **no guarantee it goes back to verify** — it may simply believe what it is told. So injected
+context is two different burdens depending on the model: **the strong one wastes effort refuting
+it, the weak one may be led by it.** Both are problems; they merely take different shapes.
 
-### 第二個問題：你看不見它
+### The second problem: you cannot see it
 
-這份實測第一輪就踩到了最極端的形態：內派請求的是 `opus-5` 與 `sonnet-5`，
-**實際跑的是 Haiku**——模型被靜默覆寫，事後翻 transcript 才發現，整組資料作廢
-（原始記錄保留為證據）。
+The very first round of this test hit the most extreme form of it. The in-process request asked
+for `opus-5` and `sonnet-5`; **what actually ran was Haiku** — the model was silently overridden,
+discovered only afterwards by reading the transcript, and the whole data set was voided (the
+original records were kept as evidence).
 
-外派這邊不會有這種事：**乾跑報表在花錢之前就把每支 spoke 的 provider 與型號印出來**，
-跑完有原始請求與回應落檔、有 token 與費用明細，每一步都查得到。而內派吃的是訂閱額度，
-**連 token 口徑都沒有公開定義**——這份實測的表格裡，內派那幾格的成本欄只能寫「訂閱」，
-與外派的金額根本不可比。
+The external path cannot do that to you: **the dry-run report prints each spoke's provider and
+model before any money is spent**, and afterwards the raw requests and responses land on disk
+along with token counts and cost. Every step is checkable. In-process dispatch draws on
+subscription quota, and **there is not even a published definition of how its tokens are counted**
+— in this test's tables, the cost column for the in-process rows can only say "subscription",
+which is not comparable to the external figures at all.
 
-**兩個問題的關係是：第二個讓第一個無法診斷。** 你懷疑那些 context 影響了審查品質，
-但你看不到它實際收到什麼、用了哪個模型、花了多少——**連要測都測不了。**
+**The relationship between the two problems is that the second makes the first undiagnosable.**
+You suspect that context is affecting review quality, but you cannot see what was actually
+received, which model ran, or what it cost — **you cannot even measure it.**
 
-所以這份實測對內派的立場是：**不是不行，是不必要。** 那些 context 對「獨立審查」這件事
-沒有用處——關不掉、看不見、換不到獨立性。要的是獨立判斷時，注入愈少愈乾淨。
+So this test's position on in-process dispatch is: **not that it fails, but that it is
+unnecessary.** That context does nothing for independent review — it cannot be switched off,
+cannot be inspected, and buys no independence. When what you want is an independent judgment, the
+less injected the cleaner.
 
 ---
 
-## 二、三個看起來很合理的解釋，全部不成立
+## 2. Three explanations that sound reasonable, and all fail
 
-### 「是 reasoning effort 的差別吧？」——不是
+### "Isn't it just reasoning effort?" — No
 
-一開始確實看起來像：三個模型在 `high` 都落在 12–13，兩個在 `medium` 落在 4–6，
-分界線漂亮地落在 effort 上。
+At first it certainly looked that way: three models on `high` landed at 12–13, two on `medium` at
+4–6, and the line fell neatly along effort.
 
-**然後我把那兩格也調到 `high`，分界線就消失了。**
-現在 `high` 這一組橫跨 **5、6、7、8、10、12、13、14、14、14、18**——填滿整個分數區間。
+**Then I set those two to `high` as well, and the line disappeared.** The `high` group now spans
+**5, 6, 7, 8, 10, 12, 13, 14, 14, 14, 18** — the entire range.
 
-原本的整齊是假的：那六格裡低分的剛好都跑 `medium`，effort 與其他變數完全共變，分不開。
+The original tidiness was an artifact: the low scorers among those six happened to be the ones
+running `medium`, so effort co-varied perfectly with everything else and could not be separated
+from it.
 
-### 「那是旗艦與輕量的級距差別吧？」——也不是
+### "Then it's the high-end versus lightweight tier?" — Also no
 
-| 級距 | 命中／19 |
-| --- | ---: |
-| 旗艦（`opus-5`／`sonnet-5`／`gpt-5.6-sol`／`deepseek-v4-pro`） | **5–18** |
-| 輕量（`deepseek-v4-flash`／`luna`／`gemini` 系／`haiku`） | 4–14 |
+First, what "tier" means here. **No vendor uses a word like "flagship"** in its own materials;
+they describe capability and positioning. Anthropic, for example (official documentation, checked
+2026-08-16): `opus-5` is "For complex agentic coding and enterprise work", `sonnet-5` is "The best
+combination of speed and intelligence" ($2/$10, 40% of opus-5) — **different tiers.**
 
-**旗艦那一列從 5 到 18。** 同一個家族、同一個環境、同一份工單，`opus-5` 拿 18、
-`sonnet-5` 拿 5，差 13 條。級距這個切法從上下兩邊都被打穿。
+| Tier | Cells | Hits / 19 |
+| --- | --- | ---: |
+| High-end | `opus-5` (18 in-process / 14 external), `gpt-5.6-sol` 13, `deepseek-v4-pro` 11 | **11–18** |
+| Balanced | `sonnet-5` (6 external / 5 in-process), `gpt-5.6-terra` 10 | **5–10** |
+| Lightweight / fast | **`deepseek-v4-flash` 14**, `luna` 8, the `gemini` models 4–7, `haiku` 5 | **4–14** |
 
-### 最乾淨的一組對照：同一家、同一份工單，只換型號
+**Look at the overlap between the first and third rows: `deepseek-v4-flash` scored 14, and the
+bottom of the high-end band is 11.** A lightweight model lands above the middle of the high-end
+range — and above the high-end model from its own vendor.
 
-DeepSeek 官方把 `v4-flash` 定位在輕量／快速那一級，旗艦是 `v4-pro`：
+The tier split is punched through from below. And the `sonnet-5` cells (5–6) make a second point:
+**paying one tier up does not guarantee one tier more output.** It costs 26 times what
+`deepseek-v4-flash` costs and found eight fewer.
+
+### The cleanest comparison: same vendor, same ticket, only the model swapped
+
+DeepSeek places `v4-flash` in the lightweight/fast tier; the high-end model of the same generation
+is `v4-pro`:
 
 | | `deepseek-v4-flash` | `deepseek-v4-pro` |
 | --- | ---: | ---: |
-| 命中／19 | **14** | **11** |
-| 成本 | $0.0095 | **$0.1529** |
+| Hits / 19 | **14** | **11** |
+| Cost | $0.0095 | **$0.1529** |
 
-**只換型號，其他一切相同。旗艦貴 16 倍，少找 3 條。**
-
----
-
-## 三、品質的第二個維度：說得對不對
-
-涵蓋率只是「找到多少」。另一個維度是**它報的東西成不成立**——一份充滿誤判的報告，
-條目再多也是負擔，因為每一條你都要回去查。
-
-這一軸與價格、與產出量**同樣無關**：
-
-- 最貴的一格（$0.4174）**零錯誤**
-- 最便宜的兩格裡，一個**零錯誤，而且糾正了其他四格共同的誤判**（$0.0095）
-- 另一個便宜的格子有**三個判斷錯誤**（$0.0069）
-
-**便宜不等於會亂講，貴也不等於不會。** 那格 $0.0095 的不只沒講錯，還抓到了其他四個
-配置一起犯的錯——包括那些貴幾十倍的。
-
-**所以品質的兩個維度都與價格脫鉤。** 這才是「旗艦模型在審查用途上失去價值」的完整理由：
-它既沒有找得比較多，也沒有講得比較準。
+**Only the model changed. The high-end one costs 16 times as much and found three fewer.**
 
 ---
 
-## 四、跑一次不夠，而且「某模型獨有」多半是假象
+## 3. The second dimension of quality: is it right?
 
-前面每個配置只跑了一次。所以我另外做了一個實驗：**同一格重複跑，會不會累積？**
+Coverage is only "how much it found". The other dimension is **whether what it reported holds** —
+a report full of false positives is a burden however long it is, because you have to go and check
+every line of it.
 
-| 模型 | 工單逐字相同重跑 | 再打亂讀檔清單順序 | 行為 |
+This axis is **just as unrelated** to price, and to volume:
+
+- The most expensive cell ($0.4174) made **zero errors**
+- Of the two cheapest cells, one made **zero errors and corrected a false positive shared by four
+  other cells** ($0.0095)
+- The other cheap one made **three wrong calls** ($0.0069)
+
+**Cheap does not mean careless, and expensive does not mean careful.** That $0.0095 cell not only
+said nothing wrong, it caught a mistake four other configurations made together — including ones
+costing dozens of times more.
+
+**So both dimensions of quality are decoupled from price.** That is the complete reason a
+high-end model loses its value for review work: it neither found more nor spoke more accurately.
+
+---
+
+## 4. One run is not enough — and "only model X found it" is usually an illusion
+
+Every configuration above was run once. So I ran a separate experiment: **does repeating the same
+cell accumulate anything?**
+
+| Model | Verbatim reruns | Then shuffling the read allowlist | Behavior |
 | --- | --- | --- | --- |
-| `gpt-5.6-luna` | 3 次聯集 **9** | 5 次聯集 **11**（+2，含一條嚴重） | **收斂**，要打亂順序才解鎖 |
-| `gpt-5.6-terra` | 3 次聯集 **10** | 5 次聯集 **11**（+1） | **完全收斂**——三次 10／9／10，聯集等於最佳單次 |
-| `deepseek-v4-flash` | **5 次聯集 18** | 7 次聯集 18（+0） | **本來就會變化**，重跑就有增益 |
+| `gpt-5.6-luna` | union of 3 runs: **9** | union of 5: **11** (+2, one of them critical) | **Converges**; needs a shuffle to unlock more |
+| `gpt-5.6-terra` | union of 3 runs: **10** | union of 5: **11** (+1) | **Fully converged** — 10/9/10, the union equal to the best single run |
+| `deepseek-v4-flash` | **union of 5 runs: 18** | union of 7: 18 (+0) | **Varies on its own**; rerunning pays immediately |
 
-兩件事：
+Two things.
 
-**1. 不同模型的重跑行為完全不同。** OpenAI 那兩個型號重跑會給出幾乎一模一樣的答案
-（`terra` 的第二次與第三次連條目都相同），**要打亂允許讀取清單的順序才會吐出新東西**；
-`deepseek-v4-flash` 不用，它每次讀的順序本來就不一樣。
+**1. Rerun behavior differs completely between models.** The two OpenAI models return nearly
+identical answers on a rerun (`terra`'s second and third runs matched item for item), and
+**only shuffling the order of the read allowlist gets anything new out of them**;
+`deepseek-v4-flash` needs no such thing, because the order in which it reads varies anyway.
 
-**2. 單次結果的穩定度比想像中低。** `deepseek-v4-flash` 五次抽樣裡，
-**只有 7 條是每次都找到的**，而有 3 條只出現過一次——其中一條是嚴重級。
+**2. A single result is less stable than you would think.** Across five samples of
+`deepseek-v4-flash`, **only 7 findings appeared every time**, and 3 appeared exactly once — one of
+them a critical one.
 
-### 一個具體的例子，說明「獨有發現」是怎麼來的
+### A concrete example of where a "unique finding" comes from
 
-19 條裡的第 17 條（嚴重級），在十一個配置裡**只有內派那格找到**。
-很自然會讀成「這是內派的優勢，工具面或載體的差別」。
+Finding 17 of the 19 (critical) was, across the eleven configurations at the time, **found only by
+in-process dispatch** — every external cell missed it, including external `opus-5`. The natural
+reading is that this is an advantage of in-process dispatch, something about the tooling or the
+carrier.
 
-**然後 `deepseek-v4-flash` 在第五次跑的時候找到了它。**
+**Then `deepseek-v4-flash` found it on the fifth run.**
 
-差別不是能力，是**外派每格只跑了一次**。所以：
+The difference was not capability. It was that **each external cell had been run once.** So:
 
-> **所有「只有某某模型找得到」的說法，都應該讀成「那一次剛好抽到了」。**
+> **Every claim of the form "only model X can find this" should be read as "that run happened to
+> draw it."**
 
-### 三個臭皮匠，勝過一個諸葛亮
+### Several cheap heads beat one expensive one
 
-這一節與前面幾節合起來，才是完整的結論。
+This section, taken with the previous ones, is where the conclusion actually lands.
 
-`gpt-5.6-sol` 單次拿 13／19，是外派格裡的高分群，花 $0.8320；`gemini-3.6-flash` 拿 7 條，
-花 $0.1802——它的單價是同系列 Flash-Lite 的兩到三倍（每百萬 token：優惠價 $0.75／$3.75，
-**2026-12-31 後回到標準價 $1.50／$7.50**，對 Flash-Lite 的 $0.25／$1.50；
-Google 官方定價頁，2026-08-16 查）。
-這類價位較高的型號，**單次表現確實可能很好**——這不需要否認。
+`gpt-5.6-sol` scored 13/19 in a single run — the top group among the external cells — for $0.8320;
+`gemini-3.6-flash` got 7 for $0.1802, at two to three times the unit price of Flash-Lite in the
+same family (per million tokens: promotional $0.75/$3.75, **reverting to the standard $1.50/$7.50
+after 2026-12-31**, against Flash-Lite's $0.25/$1.50; Google's official pricing page, checked
+2026-08-16). Models at that price point **may genuinely do well in a single run** — no need to
+deny it.
 
-**但審查這個應用允許你跑很多次。**
+**But review is an application that lets you run many times.**
 
-| | 涵蓋率 | 成本 |
+| | Coverage | Cost |
 | --- | ---: | ---: |
-| `gpt-5.6-sol` 跑一次 | 13／19 | $0.8320 |
-| **`deepseek-v4-flash` 跑五次取聯集** | **18／19** | **約 $0.05** |
+| `gpt-5.6-sol`, one run | 13/19 | $0.8320 |
+| **`deepseek-v4-flash`, union of five runs** | **18/19** | **about $0.05** |
 
-**五個臭皮匠找到 18 條，一個諸葛亮找到 13 條。**
+**Five cheap runs found 18; one expensive run found 13.**
 
-這才是重點所在：**單次表現強，只有在「只能跑一次」的應用裡才是優勢。**
-審查不是那種應用——它的產出是一份問題清單，**清單可以合併**；它也沒有即時性要求，
-跑五次跟跑一次對你來說只是多等幾分鐘。
+That is the whole point: **strong single-run performance is only an advantage in applications
+where you get one run.** Review is not one of those. Its output is a list of problems, and **lists
+merge**; nor is there any latency requirement — five runs instead of one costs you a few more
+minutes of waiting.
 
-**在一個允許重複抽樣的應用裡，把預算押在單次表現上，是押錯了地方。**
-
----
-
-## 所以實務上該怎麼用
-
-- **不要憑旗艦名號選模型。** 涵蓋率與級距沒有對應關係，旗艦那一列從 5 到 18
-- **便宜模型多跑幾次取聯集，涵蓋率會超過貴模型跑一次。** `deepseek-v4-flash` 五次聯集
-  **18／19**，高於任何一格單次的成績（外派最高 14）。**所以連「旗艦的上限比較高」
-  這個理由也不成立**——上限不在模型身上，在抽樣次數上
-- **如果用 OpenAI 系的型號，重跑要記得打亂允許讀取清單的順序**，否則它會給你一樣的答案
-- **不同家混著派**。19 條裡有些條目只有特定模型抓得到——雖然那多半是抽樣問題，
-  但混著派本來就等於增加抽樣次數
+**In an application that allows repeated sampling, spending the budget on single-run performance
+is spending it in the wrong place.**
 
 ---
 
-## 為什麼一個小規模的實測仍然說得出東西
+## What to do in practice
 
-一份規劃書、19 條漏洞、每個配置跑一次——樣本這麼小，憑什麼下結論？三個理由。
-
-### 一、這是「見微知著」的測試，而簡單的標的正是最好的篩選器
-
-素材是一份**會員 CRUD 的實作規劃書**——爛大街的題目，沒有任何領域知識門檻。
-
-**如果一個模型連這種規劃書的漏洞都抓不到，你要期望它在更複雜的專案上表現如何？**
-
-而且反過來的情況不存在：**沒有哪種模型是「簡單的不行、困難的反而行」的。**
-難度沒有這種倒過來的設計。所以低分的那幾格，換到更難的素材上只會更低，不會更高。
-
-**簡單的標的排除了一個混淆因素**——不會出現「因為題目太難所以大家都不行」的情況。
-這一輪裡有模型拿 18 條，證明題目本身是抓得到的。
-
-### 二、「這次表現差，下次會更好」不能拿來解釋低分——而且實測量過了
-
-第四節的重跑實驗正是在量這件事：`gpt-5.6-terra` 跑三次拿到 **10、9、10**，
-`gpt-5.6-luna` 的第二次與第三次**給出一模一樣的九條**。
-
-**這些模型的行為是穩定的，重跑不會突然變好。**
-
-而如果真有模型會時好時壞——**那反而是更嚴重的問題**：你每次派工都不知道拿到的是
-好的那次還是壞的那次。審查要的是可預期的產出，不是偶爾的驚喜。
-
-**兩條路通向同一個結論**：要嘛它就是這個水準（不適合），要嘛它時好時壞（更不適合）。
-
-### 三、這份實測只回答一個問題：適不適合當審查 spoke
-
-**表現好的適合做這件事，表現平庸或差的不適合做這件事。**
-
-**與這些模型的其他能力無關。** 寫程式、寫文章、對話、推理、多模態——那些是另外的評價，
-這份實測一個字都沒說，也沒有資格說。
+- **Do not pick a model by price tier.** Coverage does not track tier — lightweight
+  `deepseek-v4-flash` scored 14, above the middle of the high-end band (11–18)
+- **Run a cheap model several times and take the union; the coverage beats an expensive model run
+  once.** Five runs of `deepseek-v4-flash` union to **18/19**, higher than any single cell in the
+  test (best external single run: 14). **So even "the high-end model has a higher ceiling" does
+  not hold** — the ceiling is not in the model, it is in the number of samples
+- **If you use OpenAI models, remember to shuffle the read allowlist between reruns**, or you will
+  get the same answer back
+- **Mix vendors.** Some of the 19 findings were caught only by particular models — mostly a
+  sampling effect, but mixing vendors is itself another way of adding samples
 
 ---
 
-## 這份實測的適用範圍
+## Why a small test can still say something
 
-先講清楚它是什麼：**一次簡單的實測**。
+One design document, 19 findings, one run per configuration — with a sample that small, what
+entitles anyone to a conclusion? Three reasons.
+
+### 1. This is a test of the small revealing the large, and an easy target is the best filter
+
+The material is **an implementation plan for member CRUD** — a thoroughly generic problem with no
+domain knowledge required to read it.
+
+**If a model cannot find the holes in a plan like that, what would you expect from it on a harder
+project?**
+
+And the reverse case does not exist: **there is no model that fails on the easy material and
+succeeds on the hard.** Difficulty does not run backwards. So the low-scoring cells would only go
+lower on harder material, never higher.
+
+**An easy target also removes a confound** — nobody can say "the question was too hard, that's why
+everyone did badly." One model in this round scored 18, which proves the findings were there to be
+found.
+
+### 2. "It did badly this time, it'll do better next time" cannot explain a low score — and this was measured
+
+The rerun experiment in section 4 measured exactly that: `gpt-5.6-terra` scored **10, 9, 10** over
+three runs, and `gpt-5.6-luna`'s second and third runs **returned the same nine items.**
+
+**These models behave stably; rerunning does not suddenly make them better.**
+
+And if a model really did swing between good and bad, **that would be the worse problem**: you
+would never know whether this dispatch got you the good run or the bad one. Review needs
+predictable output, not the occasional pleasant surprise.
+
+**Both roads lead to the same place**: either this is its level (not suitable), or it is erratic
+(less suitable still).
+
+### 3. This test answers one question only: suitability as a review spoke
+
+**The ones that did well are suited to this job; the mediocre and poor ones are not.**
+
+**This says nothing about anything else these models can do.** Writing code, writing prose,
+conversation, reasoning, multimodal work — those are separate evaluations, and this test does not
+speak to them, nor is it entitled to.
+
+---
+
+## Where this test applies
+
+What it is, plainly: **one simple test.**
 
 | | |
 | --- | --- |
-| 場景 | 一份**小型規劃文件**在**實作前**的審查——不是程式碼審查，不是文章校對 |
-| 規模 | 19 條可抓的漏洞 |
-| 標準 | **總涵蓋率**（找到幾條／19） |
+| Scenario | Review of a **small design document** **before implementation** — not code review, not copy-editing |
+| Scale | 19 findable holes |
+| Metric | **Total coverage** (how many of the 19 were found) |
 
-**「總涵蓋率」是一個選擇，不是唯一的標準——而換一個標準，結論就要重算。**
+**"Total coverage" is a choice, not the only possible metric — and with a different metric the
+conclusions have to be recomputed.**
 
-如果改用「**嚴重級的問題找到幾條**」來評，排名會不一樣：三條嚴重級裡有一條的出現率
-只有 **1／5**，`deepseek-v4-flash` 要跑到第五次才抓到它；而內派的 `opus-5` **單次就找齊三條**。
-**如果你的場景不允許跑五次，或漏掉一條嚴重問題的代價很高，那前面那些結論全部要重新衡量。**
+Score it by **how many of the critical findings were caught** and the ranking changes. The three
+critical ones were distributed like this:
 
-**實務上怎麼操作，要看你的專案特性與環境**——文件多大、漏洞密度多高、你能等多久、
-漏掉一條的代價是什麼。這份實測給的是「哪些直覺不成立」，不是一套可以照抄的配置。
+| Cell | Critical | How |
+| --- | :-: | --- |
+| **In-process `opus-5`** | **3/3** | a single dispatch |
+| **External `deepseek-v4-flash`** | **3/3** | **union of five runs** — one of them appeared in only 1 of 5, caught on the fifth |
+| External `opus-5` | 2/3 | single run; the one it missed is that 1-in-5 finding |
 
-### 那型號一直更新，這種實測不就永遠測不完？
+**The same model, carried differently, differs by one critical finding** (3/3 in-process, 2/3
+external) — which is harder to explain by "model capability" than the differences between models
+are.
 
-寫這份的期間，`gemini-3.7-flash` 就出來了（與 3.6 同價；官方定價頁，2026-08-16 查）。
-**任何「哪個模型最強」的排名，都會在幾週內過期。**
+And the two cells with the highest total coverage (both 18/19) part ways here too: in-process
+`opus-5` got there in one run, `deepseek-v4-flash` needed five; **both missed finding 19**, which
+to date only one cell has ever found.
 
-而過期的不只是排名——**連官方對同一個模型的定位描述都會改**。`gemini-3.6-flash`
-在 2026-07-21 的發布公告裡是
-"Our **workhorse** model that delivers better coding, knowledge work, and multimodal performance."；
-三週後 3.7 一發布，官方模型頁上它就變成 "Our **previous-generation** Flash model"
-（兩處皆 Google 官方頁面，2026-08-16 查）。
-**同一個模型，能力一個位元都沒變，定位敘述先變了。**
+**If your situation does not allow five runs, or if missing one critical problem is expensive,
+every conclusion above has to be weighed again.**
 
-這正是為什麼**排名不值得追**：你追的東西有一半是行銷語言在動。
+**What to actually do depends on your project and your environment** — how large the documents
+are, how dense the holes are, how long you can wait, what it costs you to miss one. This test
+tells you which intuitions do not hold; it is not a configuration to copy.
 
-但這份實測的核心結論**不是排名，是否定型的**——價格解釋不了涵蓋率、級距解釋不了、
-effort 解釋不了。**那種結論說的是「這些變數沒有解釋力」，不會因為出了新型號而失效。**
+### Models keep being released — doesn't that make this test endless?
 
-同樣不會過期的是策略：**便宜的模型多跑幾次取聯集**。它不依賴任何特定型號，
-新型號出來只是換掉「便宜的那一個」是誰而已。
+While this was being written, `gemini-3.7-flash` shipped (same price as 3.6; official pricing
+page, checked 2026-08-16). **Any ranking of "which model is strongest" expires within weeks.**
 
-**所以要不要跟著重測，取決於你想得到什麼**：想排名，那永遠測不完；
-想知道哪些直覺不能用，測一次就夠了。
+And rankings are not the only thing that expires — **the vendor's own description of a given model
+changes too.** In its launch announcement on 2026-07-21, `gemini-3.6-flash` was "Our **workhorse**
+model that delivers better coding, knowledge work, and multimodal performance." Three weeks later,
+when 3.7 shipped, the official model page called it "Our **previous-generation** Flash model"
+(both from Google's official pages, checked 2026-08-16). **Same model, not one bit of capability
+changed, and the positioning changed first.**
 
-其他界線：
+Which is exactly why **rankings are not worth chasing**: half of what moves is marketing language.
 
-- **單一素材。** 一份規劃書的兩個段落。換一份素材，排名很可能不一樣
-- **型號是「手邊有什麼就測什麼」，不是設計過的取樣。** 沒有一家測全——Claude 這邊沒有
-  Fable 5，Gemini 這邊沒有 Pro 級。**所以任何一家的分數都只代表被測到的那幾個型號，
-  不代表那家廠商。** Gemini 三格的 4、5、7 尤其不能讀成「Gemini 不行」
-  ——那三格全是 Flash 與 Flash-Lite 級
-- **19 條這個分母是我做的。** 每一條都開檔驗證過確實成立，但不保證窮盡——
-  可能還有第 20 條，只是沒有任何一格找到
-- **內派那幾格吃的是訂閱額度，與外派的金額不可直接比較。** token 口徑也不同
-- **這是 2026 年 8 月的模型狀態。** 型號會更新，數字會過期
-- **這份實測的結論多半是否定型的**——effort 解釋不了、級距解釋不了、價格解釋不了。
-  **它告訴你哪些直覺是錯的，但沒有給你一條「用這個就對了」的規則。**
-  真的要選，只能在你自己的素材上跑幾格對照
+But this test's core conclusions **are not a ranking; they are negative** — price does not explain
+coverage, tier does not, effort does not. **Conclusions of that kind say "these variables have no
+explanatory power", and a new model release does not invalidate them.**
+
+The strategy does not expire either: **run a cheap model several times and take the union.** It
+depends on no particular model; a new release only changes which one "the cheap one" is.
+
+**So whether to re-run this depends on what you want from it**: if you want a ranking, you will
+never be finished; if you want to know which intuitions to stop trusting, once is enough.
+
+Other boundaries:
+
+- **A single piece of material.** Two sections of one design document. With different material the
+  ranking could well differ
+- **The models were "whatever was to hand", not a designed sample.** No vendor was covered fully —
+  no Fable 5 on the Claude side, no Pro-tier model on the Gemini side. **So any vendor's score
+  represents only the models actually tested, not the vendor.** The Gemini cells at 4, 5 and 7
+  especially cannot be read as "Gemini is weak" — all three were Flash and Flash-Lite class
+- **The denominator of 19 is mine.** Every one was opened and verified as genuine, but the list is
+  not guaranteed exhaustive — there may be a twentieth that no cell found
+- **The in-process cells draw on subscription quota and cannot be compared directly to the
+  external figures.** The token accounting differs as well
+- **This is the state of the models in August 2026.** Models will be updated and the numbers will
+  age
+- **Most of this test's conclusions are negative** — effort does not explain it, tier does not,
+  price does not. **It tells you which intuitions are wrong; it does not hand you a rule that says
+  "use this one."** If you genuinely have to choose, run a few cells against your own material
